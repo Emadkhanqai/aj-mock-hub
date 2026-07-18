@@ -15,6 +15,11 @@ describe('App', () => {
     expect(compiled.querySelector('.brand')?.textContent).toContain(
       'AJ Mock Hub',
     );
+    expect(
+      compiled
+        .querySelector<HTMLImageElement>('.brand-mark img')
+        ?.getAttribute('src'),
+    ).toBe('aj-mock-hub-mark.svg');
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
