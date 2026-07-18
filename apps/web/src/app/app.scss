@@ -31,10 +31,7 @@
 }
 
 .scene-stage {
-  transform-style: preserve-3d;
-  transform-origin: 50% 20%;
-  transition: transform 400ms var(--ease-out);
-  will-change: transform;
+  position: relative;
 }
 
 .ambient,
@@ -249,7 +246,7 @@ main.route-entering {
   display: block;
   margin: 0;
   font-size: clamp(3.6rem, 8vw, 7rem);
-  font-weight: 680;
+  font-weight: 760;
   letter-spacing: -0.075em;
   line-height: 1.12;
   padding-block: 0.03em 0.16em;
@@ -382,7 +379,6 @@ main.route-entering {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  perspective: 1100px;
 }
 
 :host ::ng-deep .project-card {
@@ -413,7 +409,6 @@ main.route-entering {
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   text-decoration: none;
   backdrop-filter: blur(26px) saturate(150%);
-  transform: translateZ(0);
   transition:
     transform 220ms var(--ease-out),
     border-color 180ms ease,
@@ -459,7 +454,7 @@ main.route-entering {
       0 22px 52px rgba(0, 0, 0, 0.26),
       0 0 0 1px rgba(120, 246, 193, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transform: translateY(-7px) rotateX(1.5deg) rotateY(-1.5deg) scale(1.012);
+    transform: translateY(-5px);
   }
 
   :host ::ng-deep .project-card:hover::after {
@@ -478,6 +473,7 @@ main.route-entering {
 :host ::ng-deep .project-card h2 {
   margin: 0 0 12px;
   font-size: 1.72rem;
+  font-weight: 720;
   letter-spacing: -0.035em;
 }
 

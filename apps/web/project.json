@@ -21,7 +21,10 @@
             "input": "apps/web/public"
           }
         ],
-        "styles": ["apps/web/src/styles.scss"]
+        "styles": [
+          "node_modules/@fontsource-variable/manrope/index.css",
+          "apps/web/src/styles.scss"
+        ]
       },
       "configurations": {
         "production": {

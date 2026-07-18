@@ -29,7 +29,6 @@ export class App {
   private parallaxFrame?: number;
   private transitionTimer?: ReturnType<typeof setTimeout>;
 
-  @ViewChild('sceneStage') private sceneStage?: ElementRef<HTMLElement>;
   @ViewChild('ambientOne') private ambientOne?: ElementRef<HTMLElement>;
   @ViewChild('ambientTwo') private ambientTwo?: ElementRef<HTMLElement>;
 
@@ -95,9 +94,6 @@ export class App {
     this.parallaxFrame = requestAnimationFrame(() => {
       const x = event.clientX / window.innerWidth - 0.5;
       const y = event.clientY / window.innerHeight - 0.5;
-      if (this.sceneStage) {
-        this.sceneStage.nativeElement.style.transform = `perspective(1400px) rotateX(${(-y * 0.7).toFixed(2)}deg) rotateY(${(x * 0.9).toFixed(2)}deg)`;
-      }
       if (this.ambientOne) {
         this.ambientOne.nativeElement.style.translate = `${(x * 32).toFixed(1)}px ${(y * 24).toFixed(1)}px`;
       }
@@ -109,7 +105,6 @@ export class App {
 
   protected resetParallax() {
     if (this.parallaxFrame) cancelAnimationFrame(this.parallaxFrame);
-    if (this.sceneStage) this.sceneStage.nativeElement.style.transform = '';
     if (this.ambientOne) this.ambientOne.nativeElement.style.translate = '';
     if (this.ambientTwo) this.ambientTwo.nativeElement.style.translate = '';
   }
