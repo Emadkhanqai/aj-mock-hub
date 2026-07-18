@@ -1,0 +1,28 @@
+{
+  "name": "database",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/database/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "prisma-generate": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/packages/database/src/generated/prisma"],
+      "options": {
+        "command": "prisma generate --config prisma.config.ts",
+        "cwd": "."
+      }
+    },
+    "build": {
+      "dependsOn": ["prisma-generate"],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/database",
+        "main": "packages/database/src/index.ts",
+        "tsConfig": "packages/database/tsconfig.lib.json",
+        "assets": ["packages/database/*.md"]
+      }
+    }
+  }
+}

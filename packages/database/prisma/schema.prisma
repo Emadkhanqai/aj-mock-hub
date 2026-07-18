@@ -1,0 +1,50 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  ACTIVE
+}
+
+enum ProjectVersionStatus {
+  DRAFT
+}
+
+enum ProjectVersionSourceType {
+  MANUAL
+}
+
+model Project {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @db.VarChar(120)
+  description String?       @db.VarChar(2000)
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt   DateTime      @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  versions    ProjectVersion[]
+
+  @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
+  @@map("projects")
+}
+
+model ProjectVersion {
+  id                   String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId            String                   @db.Uuid @map("project_id")
+  versionNumber        Int                      @map("version_number")
+  label                String                   @db.VarChar(120)
+  status               ProjectVersionStatus     @default(DRAFT)
+  sourceType           ProjectVersionSourceType @default(MANUAL) @map("source_type")
+  instructionsSnapshot String                   @db.Text @map("instructions_snapshot")
+  createdAt            DateTime                 @default(now()) @db.Timestamptz(3) @map("created_at")
+  project              Project                  @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
+  @@map("project_versions")
+}

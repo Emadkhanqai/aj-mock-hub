@@ -8,10 +8,13 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('should render title', async () => {
+  it('renders the product identity and application outlet', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Turn ideas');
+    expect(compiled.querySelector('.brand')?.textContent).toContain(
+      'AJ Mock Hub',
+    );
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
