@@ -1,0 +1,145 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: #f7f4ed;
+  background:
+    radial-gradient(
+      circle at 78% 20%,
+      rgba(239, 190, 72, 0.13),
+      transparent 25rem
+    ),
+    #0c0f0d;
+}
+
+.shell {
+  max-width: 1180px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 32px 64px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: #11130f;
+  background: #efbe48;
+  border-radius: 9px;
+  place-items: center;
+}
+
+.milestone,
+.eyebrow,
+.capabilities article > span {
+  color: #efbe48;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.hero {
+  max-width: 900px;
+  padding: 120px 0 96px;
+}
+
+h1 {
+  max-width: 850px;
+  margin: 18px 0 24px;
+  font-size: clamp(3rem, 7vw, 6.4rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.97;
+}
+
+.summary {
+  max-width: 680px;
+  color: #aeb5ad;
+  font-size: 1.2rem;
+  line-height: 1.65;
+}
+
+.status {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 34px;
+  padding: 10px 14px;
+  color: #cfd6ce;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #6bd28c;
+  border-radius: 50%;
+  box-shadow: 0 0 14px #6bd28c;
+}
+
+.capabilities {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.capabilities article {
+  min-height: 180px;
+  padding: 30px 28px 16px 0;
+}
+
+.capabilities article + article {
+  padding-left: 28px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+h2 {
+  margin: 28px 0 10px;
+  font-size: 1.15rem;
+}
+
+.capabilities p {
+  margin: 0;
+  color: #8f978f;
+  line-height: 1.55;
+}
+
+@media (max-width: 700px) {
+  .shell {
+    padding-inline: 20px;
+  }
+  .milestone {
+    display: none;
+  }
+  .hero {
+    padding: 80px 0 64px;
+  }
+  .capabilities {
+    grid-template-columns: 1fr;
+  }
+  .capabilities article + article {
+    padding-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 0;
+  }
+}

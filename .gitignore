@@ -1,0 +1,67 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+
+# dependencies
+node_modules
+
+# This repository intentionally tracks first-party workspace packages. These
+# exceptions override any developer-level global ignore rule for Packages/.
+!packages/
+!packages/**
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+.claude/worktrees
+.claude/settings.local.json
+
+.angular
+
+# local environment files (the documented example is safe to commit)
+.env
+.env.*
+!.env.example
+
+# generated and local application data
+storage/workspaces/
+storage/uploads/
+storage/exports/
+generated/
+artifacts/
+*.zip
+
+__screenshots__/
