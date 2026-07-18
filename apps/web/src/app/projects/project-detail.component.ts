@@ -24,7 +24,6 @@ import { ProjectsApiService } from '../core/projects-api.service';
     } @else {
       <header class="detail-header">
         <div>
-          <p class="eyebrow">Project · {{ project()!.status }}</p>
           <h1>{{ project()!.name }}</h1>
           <p class="lede">
             {{ project()!.description || 'No description provided.' }}
