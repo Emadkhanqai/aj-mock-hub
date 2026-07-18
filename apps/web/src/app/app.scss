@@ -41,39 +41,27 @@
 
 .nav {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
+  gap: 24px;
   margin-top: 18px;
-  padding: 12px 14px 12px 12px;
+  padding: 9px 10px;
   overflow: hidden;
   background:
-    linear-gradient(110deg, rgba(255, 255, 255, 0.07), transparent 42%),
-    rgba(12, 20, 17, 0.62);
-  border: 1px solid rgba(205, 255, 230, 0.15);
-  border-radius: 19px;
+    linear-gradient(110deg, rgba(255, 255, 255, 0.055), transparent 35%),
+    rgba(10, 17, 14, 0.72);
+  border: 1px solid rgba(205, 255, 230, 0.13);
+  border-radius: 17px;
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(24px) saturate(145%);
-}
-
-.nav::after {
-  position: absolute;
-  top: 0;
-  right: 12%;
-  width: 32%;
-  height: 1px;
-  content: '';
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(199, 255, 98, 0.7),
-    transparent
-  );
+    0 12px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075);
+  backdrop-filter: blur(28px) saturate(150%);
 }
 
 .brand {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 13px;
   align-items: center;
@@ -122,21 +110,88 @@
   text-transform: uppercase;
 }
 
-.milestone {
+.nav-links {
+  position: relative;
+  z-index: 1;
   display: flex;
-  gap: 9px;
+  gap: 3px;
   align-items: center;
-  color: #a7b4ad;
-  font-size: 0.7rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  padding: 4px;
+  background: rgba(2, 7, 5, 0.42);
+  border: 1px solid rgba(205, 255, 230, 0.09);
+  border-radius: 12px;
 }
 
-.nav-status {
+.nav-link {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   align-items: center;
+  min-height: 34px;
+  padding: 0 13px;
+  color: #89978f;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 0.76rem;
+  font-weight: 720;
+  text-decoration: none;
+  transition:
+    color 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    transform 140ms var(--ease-out);
+}
+
+.nav-link svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+}
+
+.nav-link:hover {
+  color: #dbe8e0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-link.is-active {
+  color: #eafff4;
+  background: linear-gradient(
+    135deg,
+    rgba(120, 246, 193, 0.15),
+    rgba(199, 255, 98, 0.07)
+  );
+  border-color: rgba(120, 246, 193, 0.16);
+}
+
+.nav-link:active {
+  transform: scale(0.97);
+}
+
+.nav-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-self: end;
+}
+
+.workspace-status {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #84928a;
+  font-size: 0.65rem;
+  font-weight: 760;
+}
+
+.workspace-status i {
+  width: 6px;
+  height: 6px;
+  background: var(--mint);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(120, 246, 193, 0.85);
 }
 
 .sound-toggle {
@@ -156,6 +211,18 @@
     transform 140ms var(--ease-out);
 }
 
+.sound-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.sound-toggle .sound-wave {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
 .sound-toggle:hover {
   color: var(--mint);
   background: rgba(120, 246, 193, 0.08);
@@ -163,14 +230,6 @@
 
 .sound-toggle:active {
   transform: scale(0.94);
-}
-
-.milestone i {
-  width: 7px;
-  height: 7px;
-  background: var(--mint);
-  border-radius: 50%;
-  box-shadow: 0 0 12px var(--mint);
 }
 
 main {
@@ -698,9 +757,23 @@ main.route-entering {
     padding-inline: 20px;
   }
 
-  .brand-copy small,
-  .milestone {
+  .nav {
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+  }
+
+  .brand-copy {
     display: none;
+  }
+
+  .nav-links {
+    justify-self: center;
+  }
+
+  .workspace-status {
+    width: 6px;
+    padding: 0;
+    font-size: 0;
   }
 
   main {
@@ -749,6 +822,32 @@ main.route-entering {
   }
 }
 
+@media (max-width: 480px) {
+  .shell {
+    padding-inline: 14px;
+  }
+
+  .nav {
+    padding: 8px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .nav-link {
+    min-width: 36px;
+    padding: 0 9px;
+    justify-content: center;
+  }
+
+  .nav-link span,
+  .workspace-status {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scene-stage-ready {
     animation: app-reveal 180ms ease both;
@@ -759,6 +858,8 @@ main.route-entering {
   }
 
   .brand-mark,
+  .nav-link,
+  .sound-toggle,
   :host ::ng-deep .button,
   :host ::ng-deep .project-card,
   :host ::ng-deep .project-card::after {

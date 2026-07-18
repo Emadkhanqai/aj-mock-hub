@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
@@ -20,6 +22,15 @@ describe('App', () => {
         .querySelector<HTMLImageElement>('.brand-mark img')
         ?.getAttribute('src'),
     ).toBe('aj-mock-hub-mark.svg');
+    expect(compiled.querySelector('.brand')?.getAttribute('href')).toBe(
+      '/projects',
+    );
+    expect(
+      Array.from(compiled.querySelectorAll<HTMLAnchorElement>('.nav-link')).map(
+        (link) => link.getAttribute('href'),
+      ),
+    ).toEqual(['/projects', '/projects/new']);
+    expect(compiled.querySelector('.sound-toggle svg')).toBeTruthy();
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 
