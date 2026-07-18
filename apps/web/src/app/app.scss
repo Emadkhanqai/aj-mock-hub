@@ -266,9 +266,9 @@ main.route-entering {
   display: block;
   margin: 0;
   font-size: clamp(3.6rem, 8vw, 7rem);
-  font-weight: 760;
-  letter-spacing: -0.075em;
-  line-height: 1.12;
+  font-weight: 820;
+  letter-spacing: -0.058em;
+  line-height: 1.08;
   padding-block: 0.03em 0.16em;
   overflow: visible;
   text-wrap: balance;
@@ -595,7 +595,8 @@ main.route-entering {
   max-width: min(100%, 18ch);
   padding-bottom: 0.12em;
   font-size: clamp(3rem, 5.5vw, 5.75rem);
-  letter-spacing: -0.065em;
+  font-weight: 800;
+  letter-spacing: -0.052em;
   line-height: 1.02;
   overflow-wrap: anywhere;
 }
