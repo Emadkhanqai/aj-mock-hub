@@ -44,6 +44,7 @@ export class JobsService {
         data: {
           projectId,
           projectVersionId,
+          type: 'ISOLATED_BUILD',
           idempotencyKey: input.idempotencyKey,
           logs: {
             create: { sequence: 1, level: 'INFO', message: 'Job queued.' },

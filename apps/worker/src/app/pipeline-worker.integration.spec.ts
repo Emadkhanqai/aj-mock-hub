@@ -3,10 +3,12 @@ import { join } from 'node:path';
 import { PrismaService } from '@aj-mock-hub/database';
 import {
   PIPELINE_JOB_OPTIONS,
-  WORKSPACE_PREPARATION_JOB,
+  ISOLATED_BUILD_JOB,
   createPipelineQueue,
 } from '@aj-mock-hub/job-queue';
 import { PipelineWorkerService } from './pipeline-worker.service';
+
+jest.setTimeout(60_000);
 
 describe('Pipeline worker integration', () => {
   const prisma = new PrismaService();
@@ -50,6 +52,7 @@ describe('Pipeline worker integration', () => {
       data: {
         projectId: project.id,
         projectVersionId: version.id,
+        type: 'ISOLATED_BUILD',
         idempotencyKey: 'worker-integration',
         logs: {
           create: { sequence: 1, level: 'INFO', message: 'Job queued.' },
@@ -58,7 +61,7 @@ describe('Pipeline worker integration', () => {
     });
 
     await queueResources.queue.add(
-      WORKSPACE_PREPARATION_JOB,
+      ISOLATED_BUILD_JOB,
       {
         pipelineJobId: pipelineJob.id,
         projectId: project.id,
@@ -71,11 +74,16 @@ describe('Pipeline worker integration', () => {
     const completed = await waitForTerminalState(pipelineJob.id);
     expect(completed.status).toBe('COMPLETED');
     expect(completed.attempts).toBe(1);
-    expect(completed.logs.map((log) => log.message)).toEqual([
-      'Job queued.',
-      'Attempt 1 started.',
-      'Workspace preparation completed.',
-    ]);
+    expect(completed.logs.map((log) => log.message)).toEqual(
+      expect.arrayContaining([
+        'Job queued.',
+        'Attempt 1 started.',
+        expect.stringContaining('lint exited 0'),
+        expect.stringContaining('test exited 0'),
+        expect.stringContaining('build exited 0'),
+        'Workspace preparation completed.',
+      ]),
+    );
     const workspaceRoot = process.env['WORKSPACE_ROOT'];
     if (!workspaceRoot) throw new Error('WORKSPACE_ROOT is required');
     const source = join(workspaceRoot, project.id, 'versions', '001', 'source');
@@ -98,6 +106,7 @@ describe('Pipeline worker integration', () => {
       data: {
         projectId: project.id,
         projectVersionId: version.id,
+        type: 'ISOLATED_BUILD',
         idempotencyKey: 'cancelled-worker-integration',
         status: 'CANCEL_REQUESTED',
         cancellationRequestedAt: new Date(),
@@ -112,7 +121,7 @@ describe('Pipeline worker integration', () => {
     });
 
     await queueResources.queue.add(
-      WORKSPACE_PREPARATION_JOB,
+      ISOLATED_BUILD_JOB,
       {
         pipelineJobId: pipelineJob.id,
         projectId: project.id,
@@ -131,7 +140,7 @@ describe('Pipeline worker integration', () => {
   });
 
   async function waitForTerminalState(jobId: string) {
-    for (let attempt = 0; attempt < 100; attempt += 1) {
+    for (let attempt = 0; attempt < 600; attempt += 1) {
       const job = await prisma.pipelineJob.findUniqueOrThrow({
         where: { id: jobId },
         include: { logs: { orderBy: { sequence: 'asc' } } },

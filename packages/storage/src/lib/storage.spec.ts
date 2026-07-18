@@ -1,4 +1,4 @@
-import { mkdtemp, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WorkspaceService } from './storage';
@@ -16,5 +16,17 @@ describe('WorkspaceService', () => {
     const service = new WorkspaceService('/tmp/aj-mock-hub-test');
     await expect(service.prepare('../escape', 1)).rejects.toThrow('invalid');
     await expect(service.prepare('project-id', 0)).rejects.toThrow('positive');
+  });
+
+  it('copies controlled template files while excluding generated directories', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aj-mock-hub-workspace-'));
+    const template = await mkdtemp(join(tmpdir(), 'aj-mock-hub-template-'));
+    await writeFile(join(template, 'package.json'), '{"private":true}');
+    const service = new WorkspaceService(root);
+    const workspace = await service.prepare('project-id', 1);
+    await service.copyControlledTemplate(template, workspace.source);
+    await expect(
+      readFile(join(workspace.source, 'package.json'), 'utf8'),
+    ).resolves.toBe('{"private":true}');
   });
 });

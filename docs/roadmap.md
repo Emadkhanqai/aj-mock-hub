@@ -54,7 +54,7 @@ Explicit exclusions:
 
 ## Milestone 3 — Job pipeline
 
-Status: implementation in review.
+Status: completed.
 
 - BullMQ integration.
 - Job state and lifecycle.
@@ -65,6 +65,8 @@ Status: implementation in review.
 - Workspace abstraction.
 
 ## Milestone 4 — Isolated build runner
+
+Status: implementation in review.
 
 - Controlled Angular starter template.
 - Disposable builder containers.

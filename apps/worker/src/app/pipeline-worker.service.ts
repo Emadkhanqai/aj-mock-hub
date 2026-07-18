@@ -5,10 +5,11 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '@aj-mock-hub/database';
+import { DockerBuildRunner } from '@aj-mock-hub/build-runner';
 import {
+  ISOLATED_BUILD_JOB,
   PIPELINE_QUEUE_NAME,
   PipelineQueueData,
-  WORKSPACE_PREPARATION_JOB,
   pipelineWorkerOptions,
 } from '@aj-mock-hub/job-queue';
 import { WorkspaceService } from '@aj-mock-hub/storage';
@@ -20,6 +21,15 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
   private readonly workspace = new WorkspaceService(
     process.env['WORKSPACE_ROOT'] ?? 'storage/workspaces',
   );
+  private readonly buildRunner = new DockerBuildRunner({
+    workspaceRoot: process.env['WORKSPACE_ROOT'] ?? 'storage/workspaces',
+    image:
+      process.env['ANGULAR_BUILDER_IMAGE'] ??
+      'aj-mock-hub-angular-builder:node22-v1',
+    timeoutMs: Number(process.env['BUILDER_TIMEOUT_MS'] ?? 300_000),
+  });
+  private readonly templateRoot =
+    process.env['ANGULAR_TEMPLATE_ROOT'] ?? 'templates/angular-starter';
   private worker?: Worker<PipelineQueueData>;
   private connection?: ReturnType<typeof pipelineWorkerOptions>['connection'];
 
@@ -46,7 +56,7 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async process(job: Job<PipelineQueueData>): Promise<void> {
-    if (job.name !== WORKSPACE_PREPARATION_JOB) {
+    if (job.name !== ISOLATED_BUILD_JOB) {
       throw new Error('Unsupported pipeline job type');
     }
 
@@ -79,7 +89,29 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
     );
 
     try {
-      await this.workspace.prepare(job.data.projectId, job.data.versionNumber);
+      const workspace = await this.workspace.prepare(
+        job.data.projectId,
+        job.data.versionNumber,
+      );
+      await this.workspace.copyControlledTemplate(
+        this.templateRoot,
+        workspace.source,
+      );
+      for (const command of ['lint', 'test', 'build'] as const) {
+        const result = await this.buildRunner.run({
+          jobId: record.id,
+          workspacePath: workspace.source,
+          command,
+        });
+        await this.appendLog(
+          record.id,
+          result.exitCode === 0 ? 'INFO' : 'ERROR',
+          this.formatDiagnostics(command, result),
+        );
+        if (result.exitCode !== 0) {
+          throw new Error(`Isolated ${command} validation failed`);
+        }
+      }
       const latest = await this.prisma.pipelineJob.findUniqueOrThrow({
         where: { id: record.id },
         select: { cancellationRequestedAt: true },
@@ -154,5 +186,29 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
         data: { jobId, sequence: (latest?.sequence ?? 0) + 1, level, message },
       });
     });
+  }
+
+  private formatDiagnostics(
+    command: 'lint' | 'test' | 'build',
+    result: {
+      exitCode: number;
+      stdout: string;
+      stderr: string;
+      timedOut: boolean;
+      durationMs: number;
+    },
+  ): string {
+    const output = `${result.stdout}\n${result.stderr}`
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(-700);
+    return [
+      `${command} exited ${result.exitCode} in ${result.durationMs}ms`,
+      result.timedOut ? '(timed out)' : '',
+      output,
+    ]
+      .filter(Boolean)
+      .join(' — ')
+      .slice(0, 1000);
   }
 }

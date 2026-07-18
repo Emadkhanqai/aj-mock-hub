@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
   PIPELINE_JOB_OPTIONS,
   PipelineQueueData,
-  WORKSPACE_PREPARATION_JOB,
+  ISOLATED_BUILD_JOB,
   createPipelineQueue,
 } from '@aj-mock-hub/job-queue';
 
@@ -13,7 +13,7 @@ export class PipelineQueueService implements OnModuleDestroy {
   );
 
   async enqueue(data: PipelineQueueData): Promise<void> {
-    await this.resources.queue.add(WORKSPACE_PREPARATION_JOB, data, {
+    await this.resources.queue.add(ISOLATED_BUILD_JOB, data, {
       ...PIPELINE_JOB_OPTIONS,
       jobId: data.pipelineJobId,
     });

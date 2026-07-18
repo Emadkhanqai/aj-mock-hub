@@ -12,9 +12,9 @@ The repository pins Node.js 22 because it is an active long-term-support line wi
 
 During normal development, the Angular frontend and NestJS processes run directly on macOS. This keeps file watching, debugging, dependency installation, and editor integration fast and transparent. Docker Compose is limited to PostgreSQL, Redis, MinIO, and Mailpit, which gives the team reproducible stateful dependencies without containerizing the inner development loop.
 
-## Future isolated builds
+## Isolated builds
 
-Generated projects are untrusted inputs. A later milestone will build each generated Angular application in a disposable, constrained container with controlled resources, time limits, restricted networking, and no host Docker socket mounted inside it. Milestone 1 neither builds nor executes generated code.
+Generated projects are untrusted inputs. Every Angular validation runs in a disposable, constrained container with controlled resources, time limits, disabled networking, and no host Docker socket mounted inside it. Generated applications are never executed directly on the host.
 
 ## Local-to-Azure mapping
 
@@ -50,13 +50,19 @@ Queued jobs are removed and cancelled immediately. Active work uses cooperative 
 
 Local and integration-test queues use different names. Redis is transport rather than durable product state, which keeps the future Azure Redis replacement behind the shared queue boundary.
 
+## Isolated Angular validation
+
+The controlled starter pins Angular 22.0.7 independently from the management application. A dedicated Node 22.23 builder image installs its exact lockfile once. At runtime the worker invokes the trusted host Docker CLI; neither the worker nor a generated workspace receives the Docker socket.
+
+Input is bind-mounted read-only at `/input` and copied into an ephemeral UID-10001-owned tmpfs. The container has no network, a read-only root, no Linux capabilities, no privilege escalation, no home mount, a PID limit of 256, one CPU, 1 GiB memory, and a five-minute timeout. Only `lint`, `test`, and `build` are accepted by both the host runner and container entrypoint. Containers use `--rm`, and timeout handling names and kills the exact disposable container.
+
+Build output remains ephemeral in Milestone 4. The worker persists bounded exit codes, durations, timeout state, and sanitized output in pipeline logs. Preview/artifact publication is deferred. Controlled template copying rejects symbolic links and excludes dependency, build, cache, and coverage directories.
+
 ## Deferred decisions
 
 Later milestones will decide and implement:
 
 - AI model providers, prompt contracts, and safety policy
-- Generated Angular templates and validation standards
-- Disposable builder image and container orchestration
 - ZIP handoff format
 - Email delivery, authentication, and authorization
 - Preview hosting and retention

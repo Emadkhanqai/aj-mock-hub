@@ -1,4 +1,4 @@
-export type PipelineJobType = 'WORKSPACE_PREPARATION';
+export type PipelineJobType = 'WORKSPACE_PREPARATION' | 'ISOLATED_BUILD';
 export type PipelineJobStatus =
   | 'QUEUED'
   | 'ACTIVE'

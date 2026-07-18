@@ -3,7 +3,7 @@ import IORedis from 'ioredis';
 
 export const PIPELINE_QUEUE_NAME =
   process.env['PIPELINE_QUEUE_NAME'] ?? 'aj-mock-hub-pipeline';
-export const WORKSPACE_PREPARATION_JOB = 'workspace-preparation';
+export const ISOLATED_BUILD_JOB = 'isolated-build';
 
 export interface PipelineQueueData {
   pipelineJobId: string;

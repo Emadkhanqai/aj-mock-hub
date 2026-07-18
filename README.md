@@ -31,6 +31,7 @@ docker compose up -d
 docker compose ps
 npm run db:migrate
 npm run db:seed
+docker build -f docker/angular-builder/Dockerfile -t aj-mock-hub-angular-builder:node22-v1 .
 ```
 
 The values in `.env.example` are intentionally non-production defaults. Change them in the ignored `.env` file if needed.
@@ -51,7 +52,7 @@ npm run start:api
 npm run start:worker
 ```
 
-The API enqueues trusted orchestration work through Redis and the worker consumes it. Keep both processes running when exercising the Milestone 3 pipeline. The worker prepares empty, version-scoped directories only; it does not execute generated code.
+The API enqueues trusted orchestration work through Redis and the worker consumes it. Keep both processes running when exercising the pipeline. The worker copies the controlled Angular starter into a version-scoped workspace, then runs lint, test, and build only inside disposable restricted containers. Generated code is never executed on the host.
 
 Local endpoints:
 
@@ -92,6 +93,7 @@ packages/storage         Storage abstractions
 packages/angular-standards Angular generation standards
 packages/database        Prisma client, schema, migrations, and seed
 packages/job-queue       Shared BullMQ queue names, payloads, and retry policy
+packages/build-runner    Allowlisted disposable Docker execution boundary
 docs                     Architecture decisions
 storage                  Ignored local and generated data
 ```
@@ -104,4 +106,4 @@ The API exposes project creation, listing, and detail plus creation and retrieva
 
 ## Current scope
 
-Milestone 3 does not include AI integration, uploads, MinIO application flows, generated templates, isolated builder containers, arbitrary command execution, ZIP exports, email sending, authentication, preview hosting, Azure implementation, or GitHub integration.
+Milestone 4 does not include AI integration, uploads, MinIO application flows, model-driven file changes, arbitrary command execution, preview publishing, ZIP exports, email sending, authentication, Azure implementation, or GitHub integration.
