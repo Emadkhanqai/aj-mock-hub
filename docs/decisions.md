@@ -40,11 +40,20 @@ The MVP statuses are intentionally narrow (`ACTIVE` for projects and `DRAFT`/`MA
 
 NestJS validates transport DTOs with an allowlist, rejects unknown properties, trims accepted text, and converts validation failures into a stable error envelope. Internal exception details, SQL, and credentials are not returned to clients. Resource lookups return `404`; conflicts such as an allocation collision return `409`.
 
+## Job pipeline
+
+PostgreSQL is the source of truth for pipeline lifecycle and bounded append-only logs; BullMQ and Redis provide delivery, delayed retries, and worker coordination. Jobs are anchored to immutable project versions. A unique `(project_version_id, idempotency_key)` constraint prevents duplicate orchestration records, and the same database identifier is used as the BullMQ job identifier.
+
+The only Milestone 3 job type is trusted workspace preparation. It creates empty directories through the path-confined storage abstraction and never runs commands or generated code. Jobs receive at most three attempts with exponential backoff. Queue dispatch failures can be retried using the same idempotency key; exhausted worker failures are terminal.
+
+Queued jobs are removed and cancelled immediately. Active work uses cooperative cancellation: the database records the request, and the worker checks it before work and before committing completion. Terminal jobs cannot be cancelled. Each job exposes at most 500 persisted log entries to keep reads and storage bounded.
+
+Local and integration-test queues use different names. Redis is transport rather than durable product state, which keeps the future Azure Redis replacement behind the shared queue boundary.
+
 ## Deferred decisions
 
 Later milestones will decide and implement:
 
-- BullMQ queue topology, retry policy, and job observability
 - AI model providers, prompt contracts, and safety policy
 - Generated Angular templates and validation standards
 - Disposable builder image and container orchestration

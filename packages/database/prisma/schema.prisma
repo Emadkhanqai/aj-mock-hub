@@ -21,6 +21,26 @@ enum ProjectVersionSourceType {
   MANUAL
 }
 
+enum PipelineJobType {
+  WORKSPACE_PREPARATION
+}
+
+enum PipelineJobStatus {
+  QUEUED
+  ACTIVE
+  RETRYING
+  CANCEL_REQUESTED
+  CANCELLED
+  COMPLETED
+  FAILED
+}
+
+enum PipelineJobLogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
 model Project {
   id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String        @db.VarChar(120)
@@ -29,6 +49,7 @@ model Project {
   createdAt   DateTime      @default(now()) @db.Timestamptz(3) @map("created_at")
   updatedAt   DateTime      @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
   versions    ProjectVersion[]
+  jobs        PipelineJob[]
 
   @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
   @@map("projects")
@@ -44,7 +65,50 @@ model ProjectVersion {
   instructionsSnapshot String                   @db.Text @map("instructions_snapshot")
   createdAt            DateTime                 @default(now()) @db.Timestamptz(3) @map("created_at")
   project              Project                  @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  jobs                 PipelineJob[]
 
   @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
   @@map("project_versions")
+}
+
+model PipelineJob {
+  id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId               String            @db.Uuid @map("project_id")
+  projectVersionId        String            @db.Uuid @map("project_version_id")
+  type                    PipelineJobType    @default(WORKSPACE_PREPARATION)
+  status                  PipelineJobStatus @default(QUEUED)
+  idempotencyKey          String            @db.VarChar(120) @map("idempotency_key")
+  attempts                Int               @default(0)
+  maxAttempts             Int               @default(3) @map("max_attempts")
+  cancellationRequestedAt DateTime?         @db.Timestamptz(3) @map("cancellation_requested_at")
+  cancelledAt             DateTime?         @db.Timestamptz(3) @map("cancelled_at")
+  startedAt               DateTime?         @db.Timestamptz(3) @map("started_at")
+  completedAt             DateTime?         @db.Timestamptz(3) @map("completed_at")
+  failedAt                DateTime?         @db.Timestamptz(3) @map("failed_at")
+  errorCode               String?           @db.VarChar(80) @map("error_code")
+  errorMessage            String?           @db.VarChar(500) @map("error_message")
+  createdAt               DateTime          @default(now()) @db.Timestamptz(3) @map("created_at")
+  updatedAt               DateTime          @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  project                 Project           @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  projectVersion          ProjectVersion    @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  logs                    PipelineJobLog[]
+
+  @@unique([projectVersionId, idempotencyKey], map: "pipeline_jobs_version_idempotency_key")
+  @@index([projectId, createdAt(sort: Desc)], map: "pipeline_jobs_project_created_at_idx")
+  @@index([status, createdAt], map: "pipeline_jobs_status_created_at_idx")
+  @@map("pipeline_jobs")
+}
+
+model PipelineJobLog {
+  id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jobId     String              @db.Uuid @map("job_id")
+  sequence  Int
+  level     PipelineJobLogLevel
+  message   String              @db.VarChar(1000)
+  createdAt DateTime            @default(now()) @db.Timestamptz(3) @map("created_at")
+  job       PipelineJob         @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([jobId, sequence], map: "pipeline_job_logs_job_sequence_key")
+  @@index([jobId, createdAt], map: "pipeline_job_logs_job_created_at_idx")
+  @@map("pipeline_job_logs")
 }
