@@ -21,7 +21,7 @@ Delivered:
 
 ## Milestone 2 — Project domain
 
-Status: planned; implementation not yet started.
+Status: completed.
 
 Approved scope:
 
@@ -53,6 +53,8 @@ Explicit exclusions:
 - GitHub integration.
 
 ## Milestone 3 — Job pipeline
+
+Status: implementation in review.
 
 - BullMQ integration.
 - Job state and lifecycle.

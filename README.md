@@ -51,6 +51,8 @@ npm run start:api
 npm run start:worker
 ```
 
+The API enqueues trusted orchestration work through Redis and the worker consumes it. Keep both processes running when exercising the Milestone 3 pipeline. The worker prepares empty, version-scoped directories only; it does not execute generated code.
+
 Local endpoints:
 
 - Web: `http://localhost:4200`
@@ -89,6 +91,7 @@ packages/configuration   Shared configuration utilities
 packages/storage         Storage abstractions
 packages/angular-standards Angular generation standards
 packages/database        Prisma client, schema, migrations, and seed
+packages/job-queue       Shared BullMQ queue names, payloads, and retry policy
 docs                     Architecture decisions
 storage                  Ignored local and generated data
 ```
@@ -97,8 +100,8 @@ Normal development runs the applications directly on macOS for fast feedback. Po
 
 ## Project API
 
-The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1.
+The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1. Version-scoped job endpoints enqueue workspace preparation, list jobs, return bounded lifecycle logs, and request cancellation.
 
 ## Current scope
 
-Milestone 2 does not include queues, AI integration, uploads, MinIO application flows, generated templates, isolated builder containers, ZIP exports, email sending, authentication, preview hosting, Azure implementation, or GitHub integration.
+Milestone 3 does not include AI integration, uploads, MinIO application flows, generated templates, isolated builder containers, arbitrary command execution, ZIP exports, email sending, authentication, preview hosting, Azure implementation, or GitHub integration.

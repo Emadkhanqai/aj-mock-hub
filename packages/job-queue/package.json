@@ -1,0 +1,13 @@
+{
+  "name": "@aj-mock-hub/job-queue",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "bullmq": "5.80.8",
+    "ioredis": "5.11.1",
+    "tslib": "^2.3.0"
+  }
+}

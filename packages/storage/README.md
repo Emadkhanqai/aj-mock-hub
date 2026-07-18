@@ -1,4 +1,6 @@
-# storage
+# Storage
+
+Infrastructure-neutral storage boundaries. Milestone 3 provides a path-confined folder workspace implementation that prepares empty `project/versions/NNN/source` and `logs` directories. It does not execute or populate generated code.
 
 This library was generated with [Nx](https://nx.dev).
 
