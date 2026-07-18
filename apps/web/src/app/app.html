@@ -1,13 +1,14 @@
-<div
-  class="shell"
-  (pointerdown)="unlockSound()"
-  (pointermove)="moveParallax($event)"
-  (pointerleave)="resetParallax()"
->
-  <div #ambientOne class="ambient ambient-one" aria-hidden="true"></div>
-  <div #ambientTwo class="ambient ambient-two" aria-hidden="true"></div>
-  <div class="grid-plane" aria-hidden="true"></div>
-  <div class="scene-stage">
+@if (booting()) {
+<app-boot-splash (finished)="finishBoot()" />
+}
+
+<div class="shell" (pointerdown)="unlockSound()">
+  <app-depth-scene />
+  <div
+    class="scene-stage"
+    [class.scene-stage-ready]="!booting()"
+    [attr.aria-hidden]="booting() ? 'true' : null"
+  >
     <nav class="nav" aria-label="Primary navigation">
       <a class="brand" href="/" aria-label="AJ Mock Hub home">
         <span class="brand-mark">

@@ -32,50 +32,11 @@
 
 .scene-stage {
   position: relative;
+  opacity: 0;
 }
 
-.ambient,
-.grid-plane {
-  position: fixed;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.ambient {
-  width: 34rem;
-  height: 34rem;
-  border-radius: 50%;
-  opacity: 0.24;
-  filter: blur(90px);
-  animation: ambient-drift 14s ease-in-out infinite alternate;
-}
-
-.ambient-one {
-  top: -16rem;
-  right: -8rem;
-  background: #b6ff42;
-}
-
-.ambient-two {
-  bottom: -20rem;
-  left: -15rem;
-  background: #755cff;
-  animation-delay: -7s;
-}
-
-.grid-plane {
-  right: -14vw;
-  bottom: -22rem;
-  width: 72vw;
-  height: 42rem;
-  opacity: 0.12;
-  background-image:
-    linear-gradient(rgba(120, 246, 193, 0.6) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 246, 193, 0.6) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(to top, black, transparent 82%);
-  transform: perspective(500px) rotateX(58deg) rotateZ(-8deg);
-  transform-origin: bottom;
+.scene-stage-ready {
+  animation: app-reveal 480ms var(--ease-out) both;
 }
 
 .nav {
@@ -711,10 +672,16 @@ main.route-entering {
   letter-spacing: 0.03em;
 }
 
-@keyframes ambient-drift {
+@keyframes app-reveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translateY(10px) scale(0.992);
+  }
   to {
-    opacity: 0.34;
-    transform: translate3d(3rem, 2rem, 0) scale(1.08);
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -783,8 +750,8 @@ main.route-entering {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ambient {
-    animation: none;
+  .scene-stage-ready {
+    animation: app-reveal 180ms ease both;
   }
 
   main.route-entering {

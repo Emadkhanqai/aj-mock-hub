@@ -1,0 +1,294 @@
+:host {
+  --ink: #f5f7f2;
+  --mint: #78f6c1;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.boot-splash {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    radial-gradient(
+      circle at 50% 46%,
+      rgba(120, 246, 193, 0.14),
+      transparent 18rem
+    ),
+    radial-gradient(
+      circle at 58% 54%,
+      rgba(152, 133, 255, 0.1),
+      transparent 25rem
+    ),
+    #070b0a;
+  animation: boot-dismiss 280ms var(--ease-out) 1.45s forwards;
+  inset: 0;
+  place-items: center;
+}
+
+.boot-aura {
+  position: absolute;
+  width: 28rem;
+  height: 28rem;
+  background: conic-gradient(
+    from 20deg,
+    transparent,
+    rgba(120, 246, 193, 0.18),
+    transparent 34%,
+    rgba(152, 133, 255, 0.13),
+    transparent 68%
+  );
+  border-radius: 50%;
+  filter: blur(42px);
+  opacity: 0;
+  animation: boot-aura-in 900ms var(--ease-out) 120ms forwards;
+}
+
+.boot-identity {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  perspective: 800px;
+}
+
+.boot-logo {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  filter: drop-shadow(0 24px 42px rgba(59, 232, 165, 0.2));
+}
+
+.boot-logo svg {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.boot-logo svg > * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.boot-tile {
+  opacity: 0;
+  animation: boot-tile-join 780ms var(--ease-out) 100ms forwards;
+}
+
+.boot-document {
+  opacity: 0;
+  animation: boot-document-join 720ms var(--ease-out) 260ms forwards;
+}
+
+.boot-fold {
+  opacity: 0;
+  animation: boot-fold-join 360ms var(--ease-out) 690ms forwards;
+}
+
+.boot-command {
+  filter: drop-shadow(0 0 5px rgba(169, 255, 217, 0.68));
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: boot-command-draw 480ms var(--ease-out) 760ms forwards;
+}
+
+.boot-orbit {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid rgba(120, 246, 193, 0.22);
+  border-radius: 50%;
+  opacity: 0;
+  inset: -20px;
+}
+
+.boot-orbit::after {
+  position: absolute;
+  top: 7px;
+  left: 22px;
+  width: 5px;
+  height: 5px;
+  content: '';
+  background: var(--mint);
+  border-radius: 50%;
+  box-shadow: 0 0 14px var(--mint);
+}
+
+.boot-orbit-one {
+  animation: boot-orbit-in 840ms var(--ease-out) 180ms forwards;
+}
+
+.boot-orbit-two {
+  border-color: rgba(152, 133, 255, 0.18);
+  animation: boot-orbit-in-reverse 880ms var(--ease-out) 230ms forwards;
+  inset: -34px;
+}
+
+.boot-copy {
+  display: grid;
+  gap: 7px;
+  margin-top: 34px;
+  justify-items: center;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: boot-copy-in 360ms var(--ease-out) 850ms forwards;
+}
+
+.boot-copy strong {
+  font-size: 1.2rem;
+  letter-spacing: -0.025em;
+}
+
+.boot-copy span {
+  display: flex;
+  align-items: center;
+  color: #7f8e86;
+  font-size: 0.7rem;
+  font-weight: 720;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.boot-copy i {
+  width: 3px;
+  height: 3px;
+  margin-left: 5px;
+  background: var(--mint);
+  border-radius: 50%;
+  opacity: 0.25;
+  animation: boot-dot 720ms ease-in-out infinite alternate;
+}
+
+.boot-copy i:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.boot-copy i:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+@keyframes boot-dismiss {
+  to {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.015);
+  }
+}
+
+@keyframes boot-aura-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7) rotate(-12deg);
+  }
+  to {
+    opacity: 0.8;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes boot-tile-join {
+  from {
+    opacity: 0;
+    transform: translate3d(-34px, -26px, 80px) rotate(-17deg) scale(0.76);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes boot-document-join {
+  from {
+    opacity: 0;
+    transform: translate3d(38px, 25px, 110px) rotate(14deg) scale(0.78);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes boot-fold-join {
+  from {
+    opacity: 0;
+    transform: translate3d(9px, -13px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes boot-command-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes boot-orbit-in {
+  from {
+    opacity: 0;
+    transform: rotate(-80deg) scale(0.72);
+  }
+  to {
+    opacity: 0.72;
+    transform: rotate(24deg) scale(1);
+  }
+}
+
+@keyframes boot-orbit-in-reverse {
+  from {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.68);
+  }
+  to {
+    opacity: 0.48;
+    transform: rotate(-18deg) scale(1);
+  }
+}
+
+@keyframes boot-copy-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes boot-dot {
+  to {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 700px) {
+  .boot-logo {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-splash {
+    animation: boot-dismiss 180ms ease 180ms forwards;
+  }
+
+  .boot-aura,
+  .boot-tile,
+  .boot-document,
+  .boot-fold,
+  .boot-command,
+  .boot-orbit,
+  .boot-copy {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+
+  .boot-command {
+    stroke-dashoffset: 0;
+  }
+}

@@ -1,11 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  ViewChild,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import {
   NavigationEnd,
   NavigationStart,
@@ -14,9 +7,11 @@ import {
 } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
+import { BootSplashComponent } from './boot-splash.component';
+import { DepthSceneComponent } from './depth-scene.component';
 
 @Component({
-  imports: [RouterModule],
+  imports: [BootSplashComponent, DepthSceneComponent, RouterModule],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -26,13 +21,10 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   private audioContext?: AudioContext;
   private soundUnlocked = false;
-  private parallaxFrame?: number;
   private transitionTimer?: ReturnType<typeof setTimeout>;
 
-  @ViewChild('ambientOne') private ambientOne?: ElementRef<HTMLElement>;
-  @ViewChild('ambientTwo') private ambientTwo?: ElementRef<HTMLElement>;
-
   protected readonly title = 'AJ Mock Hub';
+  protected readonly booting = signal(true);
   protected readonly routeEntering = signal(false);
   protected readonly soundEnabled = signal(
     typeof localStorage === 'undefined' ||
@@ -40,6 +32,10 @@ export class App {
   );
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.transitionTimer);
+    });
+
     this.router.events
       .pipe(
         filter(
@@ -82,31 +78,8 @@ export class App {
     }
   }
 
-  protected moveParallax(event: PointerEvent) {
-    if (
-      !matchMedia('(hover: hover) and (pointer: fine)').matches ||
-      matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return;
-    }
-
-    if (this.parallaxFrame) cancelAnimationFrame(this.parallaxFrame);
-    this.parallaxFrame = requestAnimationFrame(() => {
-      const x = event.clientX / window.innerWidth - 0.5;
-      const y = event.clientY / window.innerHeight - 0.5;
-      if (this.ambientOne) {
-        this.ambientOne.nativeElement.style.translate = `${(x * 32).toFixed(1)}px ${(y * 24).toFixed(1)}px`;
-      }
-      if (this.ambientTwo) {
-        this.ambientTwo.nativeElement.style.translate = `${(-x * 22).toFixed(1)}px ${(-y * 18).toFixed(1)}px`;
-      }
-    });
-  }
-
-  protected resetParallax() {
-    if (this.parallaxFrame) cancelAnimationFrame(this.parallaxFrame);
-    if (this.ambientOne) this.ambientOne.nativeElement.style.translate = '';
-    if (this.ambientTwo) this.ambientTwo.nativeElement.style.translate = '';
+  protected finishBoot() {
+    this.booting.set(false);
   }
 
   private playNavigationSound() {
