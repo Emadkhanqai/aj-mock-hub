@@ -23,3 +23,26 @@
 - Add tests for behavior changes.
 - Before marking work complete, run formatting checks, lint, tests, and builds for all affected projects.
 - Do not add deferred Milestone 1 features without explicit approval.
+
+## Supervised delivery workflow
+
+All implementation work must follow this process:
+
+1. Never implement directly on `main`.
+2. Create one branch per approved milestone or task.
+3. Before implementation, inspect the current architecture, state the task scope, and identify risks and assumptions.
+4. During implementation, work incrementally, avoid unrelated refactoring, and do not introduce deferred features.
+5. Before requesting review, run:
+   - `npm ci`
+   - `npm run format:check`
+   - `npm run lint`
+   - `npm test`
+   - `CI=1 npm run build`
+   - Relevant integration and security checks
+6. Perform a self-review covering correctness, security, architecture boundaries, test coverage, error handling, migration safety, secrets, and generated-file safety.
+7. Commit and push the task branch.
+8. Open or update a pull request documenting the completed scope, changed files, architecture decisions, commands and exit results, known issues, and deferred items.
+9. Wait for supervisor review.
+10. Address every review comment in a new commit.
+11. Never merge without explicit approval.
+12. Request user input only for business, security, destructive, credential, cost, or major architecture decisions.
