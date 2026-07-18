@@ -1,7 +1,14 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { join } = require('path');
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
+  externals: [
+    nodeExternals({
+      allowlist: [/^@aj-mock-hub\//],
+      modulesDir: join(__dirname, '../../node_modules'),
+    }),
+  ],
   output: {
     path: join(__dirname, '../../dist/apps/api'),
     clean: true,
@@ -18,6 +25,8 @@ module.exports = {
       assets: ['./src/assets'],
       optimization: false,
       outputHashing: 'none',
+      externalDependencies: 'none',
+      mergeExternals: true,
       generatePackageJson: true,
       sourceMap: true,
     }),
