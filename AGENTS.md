@@ -1,5 +1,17 @@
 # AJ Mock Hub contributor instructions
 
+## Required authoritative context
+
+Before planning, implementing, reviewing, or modifying any task, read these documents in full:
+
+1. `docs/product-brief.md`
+2. `docs/roadmap.md`
+3. `docs/autonomous-execution.md`
+4. `docs/quality-gates.md`
+5. Relevant entries in `docs/decisions.md`
+
+These documents define product purpose, architecture, milestone boundaries, execution policy, and completion requirements. Do not proceed from task text alone. If instructions conflict or would require changing an authoritative decision, stop and request clarification.
+
 ## Runtime and dependencies
 
 - Use Node.js 22 LTS. Do not change the repository to another Node major without an approved architecture decision.
@@ -22,7 +34,7 @@
 - Do not commit generated workspaces, uploads, exports, build output, coverage, or dependencies.
 - Add tests for behavior changes.
 - Before marking work complete, run formatting checks, lint, tests, and builds for all affected projects.
-- Do not add deferred Milestone 1 features without explicit approval.
+- Do not add features deferred beyond the currently approved milestone.
 
 ## Supervised delivery workflow
 

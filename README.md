@@ -1,6 +1,6 @@
 # AJ Mock Hub
 
-Local-first foundation for creating, validating, versioning, and handing off Angular interface prototypes. Milestone 1 establishes the monorepo, application shells, shared packages, and local infrastructure only.
+Local-first application for creating, preserving, and reviewing versioned Angular interface briefs. Milestone 2 adds the first real domain: projects and immutable project versions.
 
 ## Prerequisites
 
@@ -29,6 +29,8 @@ cp .env.example .env
 npm ci
 docker compose up -d
 docker compose ps
+npm run db:migrate
+npm run db:seed
 ```
 
 The values in `.env.example` are intentionally non-production defaults. Change them in the ignored `.env` file if needed.
@@ -63,8 +65,9 @@ Local endpoints:
 npm run format:check
 npm run lint
 npm test
-npm run build
-docker compose config
+npm run test:integration
+CI=1 npm run build
+docker compose --env-file .env.example config
 ```
 
 ## Stop local infrastructure
@@ -85,12 +88,17 @@ packages/contracts       Shared transport contracts
 packages/configuration   Shared configuration utilities
 packages/storage         Storage abstractions
 packages/angular-standards Angular generation standards
+packages/database        Prisma client, schema, migrations, and seed
 docs                     Architecture decisions
 storage                  Ignored local and generated data
 ```
 
 Normal development runs the applications directly on macOS for fast feedback. PostgreSQL, Redis, MinIO, and Mailpit run in Docker Compose and bind only to localhost. See [docs/decisions.md](docs/decisions.md) for the rationale and future Azure mapping.
 
+## Project API
+
+The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1.
+
 ## Current scope
 
-Milestone 1 does not include Prisma, BullMQ queues, AI integration, generated templates, isolated builder containers, ZIP exports, email sending, authentication, preview hosting, or Azure integrations.
+Milestone 2 does not include queues, AI integration, uploads, MinIO application flows, generated templates, isolated builder containers, ZIP exports, email sending, authentication, preview hosting, Azure implementation, or GitHub integration.

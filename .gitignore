@@ -63,5 +63,6 @@ storage/exports/
 generated/
 artifacts/
 *.zip
+packages/database/src/generated/
 
 __screenshots__/
