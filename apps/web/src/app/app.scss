@@ -562,7 +562,26 @@ main.route-entering {
 }
 
 :host ::ng-deep .detail-header {
-  padding-top: 34px;
+  align-items: center;
+  padding: 28px 0 52px;
+}
+
+:host ::ng-deep .detail-header > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+:host ::ng-deep .detail-header h1 {
+  max-width: min(100%, 18ch);
+  padding-bottom: 0.12em;
+  font-size: clamp(3rem, 5.5vw, 5.75rem);
+  letter-spacing: -0.065em;
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+}
+
+:host ::ng-deep .detail-header > .button {
+  flex: 0 0 auto;
 }
 
 :host ::ng-deep .version-form {
@@ -726,6 +745,12 @@ main.route-entering {
     align-items: flex-start;
     flex-direction: column;
     padding-bottom: 52px;
+  }
+
+  :host ::ng-deep .detail-header h1 {
+    max-width: 100%;
+    font-size: clamp(2.75rem, 14vw, 4.25rem);
+    line-height: 1.04;
   }
 
   :host ::ng-deep .project-grid {
