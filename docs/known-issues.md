@@ -10,6 +10,8 @@ The Nx, webpack-dev-server, SockJS, UUID, and esbuild findings affect local buil
 
 Milestone 3 added pinned BullMQ and ioredis dependencies without increasing the advisory count or introducing an advisory in either package.
 
+The controlled Angular 22.0.7 starter has one low transitive esbuild advisory limited to the Windows development server. Builder containers are Linux, run only non-server lint/test/build commands, and have networking disabled. The starter has no high or critical advisories.
+
 ## Angular/Nx renderer
 
 Angular builds can stall in an interactive renderer in constrained non-interactive execution environments. `CI=1 npm run build` disables that renderer and is the authoritative production build command used by the quality gates. Normal interactive local builds are not affected.

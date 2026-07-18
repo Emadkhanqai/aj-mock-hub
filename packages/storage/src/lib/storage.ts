@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, readdir } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 
 const SAFE_SEGMENT = /^[a-zA-Z0-9-]+$/;
@@ -37,6 +37,42 @@ export class WorkspaceService {
       mkdir(workspace.logs, { recursive: true }),
     ]);
     return workspace;
+  }
+
+  async copyControlledTemplate(
+    templateRoot: string,
+    destination: string,
+  ): Promise<void> {
+    const target = resolve(destination);
+    if (!target.startsWith(`${this.root}${sep}`)) {
+      throw new Error('Template destination escapes its configured root');
+    }
+    await this.copyDirectory(resolve(templateRoot), target);
+  }
+
+  private async copyDirectory(
+    source: string,
+    destination: string,
+  ): Promise<void> {
+    await mkdir(destination, { recursive: true });
+    for (const entry of await readdir(source, { withFileTypes: true })) {
+      if (
+        ['node_modules', 'dist', '.angular', 'coverage'].includes(entry.name)
+      ) {
+        continue;
+      }
+      const sourcePath = resolve(source, entry.name);
+      const destinationPath = resolve(destination, entry.name);
+      const metadata = await lstat(sourcePath);
+      if (metadata.isSymbolicLink()) {
+        throw new Error('Controlled templates cannot contain symbolic links');
+      }
+      if (metadata.isDirectory()) {
+        await this.copyDirectory(sourcePath, destinationPath);
+      } else if (metadata.isFile()) {
+        await copyFile(sourcePath, destinationPath);
+      }
+    }
   }
 
   private assertSegment(segment: string): void {

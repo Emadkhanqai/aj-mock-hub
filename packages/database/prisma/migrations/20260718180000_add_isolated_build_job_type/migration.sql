@@ -1,0 +1,1 @@
+ALTER TYPE "PipelineJobType" ADD VALUE 'ISOLATED_BUILD';

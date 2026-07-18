@@ -23,6 +23,7 @@ enum ProjectVersionSourceType {
 
 enum PipelineJobType {
   WORKSPACE_PREPARATION
+  ISOLATED_BUILD
 }
 
 enum PipelineJobStatus {

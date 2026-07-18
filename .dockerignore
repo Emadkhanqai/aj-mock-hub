@@ -1,0 +1,8 @@
+**
+!docker/
+!docker/angular-builder/
+!docker/angular-builder/**
+!templates/
+!templates/angular-starter/
+!templates/angular-starter/package.json
+!templates/angular-starter/package-lock.json

@@ -22,7 +22,8 @@
         "./packages/angular-standards/src/index.ts"
       ],
       "@aj-mock-hub/database": ["./packages/database/src/index.ts"],
-      "@aj-mock-hub/job-queue": ["./packages/job-queue/src/index.ts"]
+      "@aj-mock-hub/job-queue": ["./packages/job-queue/src/index.ts"],
+      "@aj-mock-hub/build-runner": ["./packages/build-runner/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
