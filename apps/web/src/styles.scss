@@ -5,10 +5,12 @@
 
 html {
   background: #0c0f0d;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   font-family:
     Inter,
     ui-sans-serif,
@@ -17,4 +19,16 @@ body {
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
+  background: #070b0a;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  color: #07100c;
+  background: #8fffd0;
 }
