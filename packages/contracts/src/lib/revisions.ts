@@ -17,6 +17,18 @@ export type VisualRevisionOperation =
 
 export type VisualThemePreset = 'AURORA' | 'MIDNIGHT' | 'PAPER' | 'SUNSET';
 
+export interface OptimisticPreviewOperationMessage {
+  type: 'ajmh:preview-operation';
+  messageId: string;
+  operation: VisualRevisionOperation;
+  targetId: string;
+  replacementText: string | null;
+  textColor: string | null;
+  backgroundColor: string | null;
+  buttonLabel: string | null;
+  themePreset: VisualThemePreset | null;
+}
+
 export interface CreateDraftRevisionRequest {
   instruction: string;
   replacementText: string;

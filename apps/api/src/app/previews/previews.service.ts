@@ -3,6 +3,7 @@ import type { StaticPreviewResponse } from '@aj-mock-hub/contracts';
 import { PrismaService, type StaticPreview } from '@aj-mock-hub/database';
 import type { ObjectStorage } from '@aj-mock-hub/storage';
 import { PREVIEW_STORAGE } from './previews.providers';
+import { injectPreviewRuntimeBridge } from './preview-runtime-bridge';
 
 export interface PreviewFile {
   body: Buffer;
@@ -33,11 +34,12 @@ export class PreviewsService {
     const path = Array.isArray(rawPath) ? rawPath.join('/') : rawPath;
     this.assertPath(path);
     try {
+      const body = await this.storage.get(
+        `${preview.storagePrefix}/${path}`,
+        10 * 1024 * 1024,
+      );
       return {
-        body: await this.storage.get(
-          `${preview.storagePrefix}/${path}`,
-          10 * 1024 * 1024,
-        ),
+        body: injectPreviewRuntimeBridge(body, path),
         contentType: this.contentType(path),
       };
     } catch {

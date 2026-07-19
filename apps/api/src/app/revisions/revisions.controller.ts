@@ -89,7 +89,12 @@ export class RevisionsController {
       path,
     );
     response.setHeader('Content-Type', file.contentType);
-    response.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    response.setHeader(
+      'Cache-Control',
+      file.contentType.startsWith('text/html')
+        ? 'private, no-store'
+        : 'private, max-age=31536000, immutable',
+    );
     response.send(file.body);
   }
 }

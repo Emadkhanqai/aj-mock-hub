@@ -53,4 +53,20 @@ describe('PreviewsService', () => {
       service.getFile(preview.projectId, preview.projectVersionId, '../secret'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('adds the temporary editing bridge only to delivered HTML', async () => {
+    prisma.staticPreview.findFirst.mockResolvedValue(preview);
+    storage.get.mockResolvedValue(
+      Buffer.from('<html><body>Validated preview</body></html>'),
+    );
+
+    const file = await service.getFile(
+      preview.projectId,
+      preview.projectVersionId,
+      'index.html',
+    );
+
+    expect(file.body.toString()).toContain('data-ajmh-preview-bridge');
+    expect(file.contentType).toContain('text/html');
+  });
 });

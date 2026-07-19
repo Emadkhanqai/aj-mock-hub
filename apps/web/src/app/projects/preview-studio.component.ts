@@ -15,6 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import type {
   DraftRevisionResponse,
+  OptimisticPreviewOperationMessage,
   PreviewElementMessage,
   PreviewElementSelection,
   PreviewViewport,
@@ -156,7 +157,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   [src]="activePreviewUrl()"
                   sandbox="allow-scripts"
                   title="Generated Angular application preview"
-                  (load)="frameLoading.set(false)"
+                  (load)="onFrameLoad()"
                 ></iframe>
               </div>
             </div>
@@ -312,11 +313,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
                     class="revision-status"
                     [attr.data-status]="revision()!.status"
                   >
-                    <span>{{
-                      revision()!.status === 'READY'
-                        ? 'Preview ready'
-                        : revision()!.status
-                    }}</span>
+                    <span>{{ revisionStatusLabel() }}</span>
                     <p>{{ revisionMessage() }}</p>
                   </div>
                   @if (revision()!.status === 'READY') {
@@ -1006,6 +1003,7 @@ export class PreviewStudioComponent implements OnInit {
   readonly revision = signal<DraftRevisionResponse | null>(null);
   readonly activePreviewUrl = signal<SafeResourceUrl | null>(null);
   readonly showingDraft = signal(false);
+  readonly optimisticApplied = signal(false);
   readonly editorOpen = signal(false);
   readonly creatingRevision = signal(false);
   readonly acting = signal(false);
@@ -1101,6 +1099,19 @@ export class PreviewStudioComponent implements OnInit {
   @HostListener('window:message', ['$event'])
   onPreviewMessage(event: MessageEvent<unknown>): void {
     if (event.source !== this.previewFrame?.nativeElement.contentWindow) return;
+    if (this.isPreviewBridgeMessage(event.data)) {
+      if (event.data.type === 'ajmh:preview-operation-applied') {
+        this.optimisticApplied.set(true);
+      } else {
+        const revision = this.revision();
+        if (revision?.status === 'VALIDATING') {
+          this.applyOptimisticPreview(
+            this.previewMessageFromRevision(revision),
+          );
+        }
+      }
+      return;
+    }
     if (!this.isSelectionMessage(event.data)) return;
     this.selected.set(event.data.element);
     this.editorOpen.set(true);
@@ -1120,6 +1131,12 @@ export class PreviewStudioComponent implements OnInit {
     ) {
       return;
     }
+    const previewMessage = this.previewMessage(
+      operation,
+      target,
+      `pending-${crypto.randomUUID()}`,
+    );
+    this.applyOptimisticPreview(previewMessage);
     this.creatingRevision.set(true);
     this.actionError.set('');
     this.api
@@ -1143,6 +1160,7 @@ export class PreviewStudioComponent implements OnInit {
         },
         error: () => {
           this.creatingRevision.set(false);
+          this.showAccepted();
           this.actionError.set(
             'The draft could not be queued. Confirm the worker is running.',
           );
@@ -1232,13 +1250,31 @@ export class PreviewStudioComponent implements OnInit {
     const revision = this.revision();
     if (!revision) return '';
     return {
-      VALIDATING: 'We’re checking your changes and preparing a safe preview.',
+      VALIDATING:
+        'Your change is visible now. We’re checking it safely in the background.',
       READY:
         'Your changes are ready. Check the preview, then keep or remove them.',
       ACCEPTED: 'Your changes were saved as a new version.',
       DISCARDED: 'The changes were removed. Your current version is unchanged.',
       FAILED: revision.errorMessage ?? 'We could not build these changes.',
     }[revision.status];
+  }
+
+  revisionStatusLabel(): string {
+    const status = this.revision()?.status;
+    if (status === 'VALIDATING') {
+      return this.optimisticApplied() ? 'Applied instantly' : 'Applying change';
+    }
+    if (status === 'READY') return 'Preview ready';
+    return status ?? '';
+  }
+
+  onFrameLoad(): void {
+    this.frameLoading.set(false);
+    const revision = this.revision();
+    if (revision?.status === 'VALIDATING') {
+      this.applyOptimisticPreview(this.previewMessageFromRevision(revision));
+    }
   }
 
   formatBytes(bytes: number): string {
@@ -1253,7 +1289,10 @@ export class PreviewStudioComponent implements OnInit {
         const latest = items[0];
         if (!latest || latest.status === 'ACCEPTED') return;
         this.revision.set(latest);
-        if (latest.status === 'VALIDATING') this.pollRevision(latest.id);
+        if (latest.status === 'VALIDATING') {
+          this.applyOptimisticPreview(this.previewMessageFromRevision(latest));
+          this.pollRevision(latest.id);
+        }
       },
     });
   }
@@ -1269,6 +1308,7 @@ export class PreviewStudioComponent implements OnInit {
         next: (revision) => {
           this.revision.set(revision);
           if (revision.status === 'READY') this.showRevision();
+          if (revision.status === 'FAILED') this.showAccepted();
         },
         error: () =>
           this.actionError.set('Revision status could not be refreshed.'),
@@ -1284,6 +1324,50 @@ export class PreviewStudioComponent implements OnInit {
     this.activePreviewUrl.set(
       this.sanitizer.bypassSecurityTrustResourceUrl(path),
     );
+  }
+
+  private applyOptimisticPreview(
+    message: OptimisticPreviewOperationMessage,
+  ): void {
+    this.showingDraft.set(true);
+    this.optimisticApplied.set(false);
+    this.previewFrame?.nativeElement.contentWindow?.postMessage(message, '*');
+  }
+
+  private previewMessage(
+    operation: VisualRevisionOperation,
+    target: PreviewElementSelection,
+    messageId: string,
+  ): OptimisticPreviewOperationMessage {
+    return {
+      type: 'ajmh:preview-operation',
+      messageId,
+      operation,
+      targetId: target.id,
+      replacementText:
+        operation === 'RENAME' ? this.replacementText.value : null,
+      textColor: operation === 'RECOLOR' ? this.textColor.value : null,
+      backgroundColor:
+        operation === 'RECOLOR' ? this.backgroundColor.value : null,
+      buttonLabel: operation === 'ADD_BUTTON' ? this.buttonLabel.value : null,
+      themePreset: operation === 'THEME' ? this.themePreset.value : null,
+    };
+  }
+
+  private previewMessageFromRevision(
+    revision: DraftRevisionResponse,
+  ): OptimisticPreviewOperationMessage {
+    return {
+      type: 'ajmh:preview-operation',
+      messageId: revision.id,
+      operation: revision.operation,
+      targetId: revision.target.id,
+      replacementText: revision.replacementText,
+      textColor: revision.textColor,
+      backgroundColor: revision.backgroundColor,
+      buttonLabel: revision.buttonLabel,
+      themePreset: revision.themePreset,
+    };
   }
 
   private isSelectionMessage(value: unknown): value is PreviewElementMessage {
@@ -1302,6 +1386,20 @@ export class PreviewStudioComponent implements OnInit {
         element.pageId,
         element.label,
       ].every((field) => typeof field === 'string' && field.length > 0)
+    );
+  }
+
+  private isPreviewBridgeMessage(
+    value: unknown,
+  ): value is
+    | { type: 'ajmh:preview-bridge-ready' }
+    | { type: 'ajmh:preview-operation-applied'; messageId: string } {
+    if (!value || typeof value !== 'object') return false;
+    const candidate = value as { type?: unknown; messageId?: unknown };
+    return (
+      candidate.type === 'ajmh:preview-bridge-ready' ||
+      (candidate.type === 'ajmh:preview-operation-applied' &&
+        typeof candidate.messageId === 'string')
     );
   }
 }

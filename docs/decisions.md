@@ -96,12 +96,15 @@ Download links are short-lived HMAC-signed AJ Mock Hub API URLs. They do not rev
 
 The preview studio offers a bounded visual editing experience without becoming
 a general-purpose IDE. Users can rename, recolor, or duplicate a selected item,
-add a button, and apply an allowlisted page theme. The browser sends a typed
-operation and validated values; it never edits generated files or iframe DOM
-directly. The worker applies the operation to the framework-independent UI
-specification, regenerates controlled files, and validates the result in the
-existing disposable builder container. A visual draft must pass lint, tests,
-and build before it can be previewed or accepted as a new immutable version.
+add a button, and apply an allowlisted page theme. The parent sends a typed,
+bounded operation to a fixed AJ Mock Hub runtime bridge inside the sandbox. The
+bridge applies a temporary visual-only change immediately; it has no network
+access and cannot alter stored preview files, generated source, or the approved
+specification. The worker applies the same operation to the framework-independent
+UI specification, regenerates controlled files, and validates the result in the
+existing disposable builder container. The validated draft replaces the
+temporary rendering, and only a draft that passes lint, tests, and build can be
+accepted as a new immutable version.
 
 New-project onboarding offers the same allowlisted theme presets and captures
 the first version instructions immediately. Arbitrary HTML, CSS, JavaScript,

@@ -21,6 +21,7 @@ import {
 import { WorkspaceService, type ObjectStorage } from '@aj-mock-hub/storage';
 import { PipelineQueueService } from '../jobs/pipeline-queue.service';
 import { PREVIEW_STORAGE } from '../previews/previews.providers';
+import { injectPreviewRuntimeBridge } from '../previews/preview-runtime-bridge';
 import { AcceptDraftRevisionDto } from './dto/accept-draft-revision.dto';
 import { CreateDraftRevisionDto } from './dto/create-draft-revision.dto';
 
@@ -278,11 +279,12 @@ export class RevisionsService {
     const path = Array.isArray(rawPath) ? rawPath.join('/') : rawPath;
     this.assertPath(path);
     try {
+      const body = await this.storage.get(
+        `${revision.previewStoragePrefix}/${path}`,
+        10 * 1024 * 1024,
+      );
       return {
-        body: await this.storage.get(
-          `${revision.previewStoragePrefix}/${path}`,
-          10 * 1024 * 1024,
-        ),
+        body: injectPreviewRuntimeBridge(body, path),
         contentType: this.contentType(path),
       };
     } catch {
