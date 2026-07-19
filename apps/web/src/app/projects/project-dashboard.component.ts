@@ -42,7 +42,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
       </section>
     } @else if (projects().length === 0) {
       <section class="state empty">
-        <span class="state-number">00</span>
+        <span class="state-number" aria-hidden="true">∞</span>
         <h2>Start with a project</h2>
         <p>
           A project holds the brief. Immutable versions preserve how it evolves.
