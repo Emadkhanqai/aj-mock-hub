@@ -26,7 +26,7 @@ export function createObjectStorage(): ObjectStorage {
   }
   return new MinioObjectStorage({
     endpoint: process.env['MINIO_ENDPOINT'] ?? '127.0.0.1',
-    port: Number(process.env['MINIO_API_PORT'] ?? 9000),
+    port: Number(process.env['MINIO_API_PORT'] ?? 19000),
     useSsl: process.env['MINIO_USE_SSL'] === 'true',
     accessKey,
     secretKey,

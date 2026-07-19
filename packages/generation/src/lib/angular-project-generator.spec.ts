@@ -37,5 +37,7 @@ describe('AngularProjectGenerator', () => {
       'README.md',
     ]);
     expect(files[0]?.content).toContain('bootstrapApplication');
+    expect(files[0]?.content).toContain('data-ajmh-id');
+    expect(files[0]?.content).toContain('ajmh:element-selected');
   });
 });

@@ -10,15 +10,21 @@ import type {
   ProjectResponse,
   ProjectVersionListResponse,
   ProjectVersionResponse,
+  ProjectVersionComparisonResponse,
+  UiSpecificationContent,
 } from '@aj-mock-hub/contracts';
 import {
   PrismaService,
   type Project,
   type ProjectVersion,
 } from '@aj-mock-hub/database';
+import { WorkspaceService } from '@aj-mock-hub/storage';
 
 @Injectable()
 export class ProjectsService {
+  private readonly workspace = new WorkspaceService(
+    process.env['WORKSPACE_ROOT'] ?? 'storage/workspaces',
+  );
   constructor(private readonly prisma: PrismaService) {}
 
   async createProject(input: CreateProjectRequest): Promise<ProjectResponse> {
@@ -122,6 +128,144 @@ export class ProjectsService {
       });
     }
     return this.mapVersion(version);
+  }
+
+  async duplicateVersion(
+    projectId: string,
+    versionId: string,
+    label: string,
+  ): Promise<ProjectVersionResponse> {
+    return this.copyVersion(projectId, versionId, label, 'DUPLICATE');
+  }
+
+  async restoreVersion(
+    projectId: string,
+    versionId: string,
+    label: string,
+  ): Promise<ProjectVersionResponse> {
+    return this.copyVersion(projectId, versionId, label, 'RESTORE');
+  }
+
+  async compareVersions(
+    projectId: string,
+    leftVersionId: string,
+    rightVersionId: string,
+  ): Promise<ProjectVersionComparisonResponse> {
+    const versions = await this.prisma.projectVersion.findMany({
+      where: {
+        projectId,
+        id: { in: [leftVersionId, rightVersionId] },
+      },
+      include: { specification: true },
+    });
+    const left = versions.find((version) => version.id === leftVersionId);
+    const right = versions.find((version) => version.id === rightVersionId);
+    if (!left || !right) {
+      throw new NotFoundException({
+        code: 'PROJECT_VERSION_NOT_FOUND',
+        message: 'Project version not found.',
+      });
+    }
+    const leftPages = this.pageMap(
+      left.specification?.content as unknown as
+        | UiSpecificationContent
+        | undefined,
+    );
+    const rightPages = this.pageMap(
+      right.specification?.content as unknown as
+        | UiSpecificationContent
+        | undefined,
+    );
+    return {
+      left: this.mapVersion(left),
+      right: this.mapVersion(right),
+      instructionsChanged:
+        left.instructionsSnapshot !== right.instructionsSnapshot,
+      pages: {
+        added: [...rightPages.keys()].filter((id) => !leftPages.has(id)),
+        removed: [...leftPages.keys()].filter((id) => !rightPages.has(id)),
+        changed: [...leftPages.keys()].filter(
+          (id) =>
+            rightPages.has(id) && leftPages.get(id) !== rightPages.get(id),
+        ),
+      },
+    };
+  }
+
+  private async copyVersion(
+    projectId: string,
+    sourceVersionId: string,
+    label: string,
+    sourceType: 'DUPLICATE' | 'RESTORE',
+  ): Promise<ProjectVersionResponse> {
+    const version = await this.prisma.$transaction(
+      async (transaction) => {
+        await transaction.$queryRaw`SELECT "id" FROM "projects" WHERE "id" = ${projectId}::uuid FOR UPDATE`;
+        const source = await transaction.projectVersion.findFirst({
+          where: { id: sourceVersionId, projectId },
+          include: { specification: true, preview: true },
+        });
+        if (!source) {
+          throw new NotFoundException({
+            code: 'PROJECT_VERSION_NOT_FOUND',
+            message: 'Project version not found.',
+          });
+        }
+        if (!source.specification || !source.preview) {
+          throw new ConflictException({
+            code: 'VERSION_NOT_COPYABLE',
+            message: 'Only a validated generated version can be copied.',
+          });
+        }
+        const latest = await transaction.projectVersion.findFirst({
+          where: { projectId },
+          select: { versionNumber: true },
+          orderBy: { versionNumber: 'desc' },
+        });
+        const versionNumber = (latest?.versionNumber ?? 0) + 1;
+        const created = await transaction.projectVersion.create({
+          data: {
+            projectId,
+            versionNumber,
+            label,
+            sourceType,
+            instructionsSnapshot: source.instructionsSnapshot,
+            specification: {
+              create: {
+                projectId,
+                status: 'APPROVED',
+                approvedAt: new Date(),
+                content: source.specification.content as never,
+              },
+            },
+            preview: {
+              create: {
+                projectId,
+                sourceJobId: source.preview.sourceJobId,
+                storagePrefix: source.preview.storagePrefix,
+                contentHash: source.preview.contentHash,
+                fileCount: source.preview.fileCount,
+                totalBytes: source.preview.totalBytes,
+              },
+            },
+          },
+        });
+        const target = await this.workspace.prepare(projectId, versionNumber);
+        await this.workspace.replaceControlledDirectory(
+          this.workspace.versionSource(projectId, source.versionNumber),
+          target.source,
+        );
+        return created;
+      },
+      { timeout: 15_000 },
+    );
+    return this.mapVersion(version);
+  }
+
+  private pageMap(content?: UiSpecificationContent): Map<string, string> {
+    return new Map(
+      (content?.pages ?? []).map((page) => [page.id, JSON.stringify(page)]),
+    );
   }
 
   private mapProject(project: Project): ProjectResponse {

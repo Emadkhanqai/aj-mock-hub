@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ProjectResponse,
   ProjectVersionResponse,
+  ProjectVersionComparisonResponse,
 } from '@aj-mock-hub/contracts';
 import { forkJoin } from 'rxjs';
 import { ProjectsApiService } from '../core/projects-api.service';
@@ -96,6 +97,38 @@ import { ProjectsApiService } from '../core/projects-api.service';
             }}
           </h2>
         </div>
+        @if (versions().length > 1) {
+          <div class="compare-toolbar">
+            <span>Select any two versions below to compare.</span>
+            <button
+              class="secondary-button"
+              type="button"
+              [disabled]="compareSelection().length !== 2 || comparing()"
+              (click)="compareVersions()"
+            >
+              {{ comparing() ? 'Comparing…' : 'Compare versions' }}
+            </button>
+          </div>
+        }
+        @if (comparison()) {
+          <div class="comparison-card">
+            <strong
+              >v{{ comparison()!.left.versionNumber }} → v{{
+                comparison()!.right.versionNumber
+              }}</strong
+            >
+            <span>{{
+              comparison()!.instructionsChanged
+                ? 'Instructions changed'
+                : 'Instructions unchanged'
+            }}</span>
+            <p>
+              {{ comparison()!.pages.added.length }} pages added ·
+              {{ comparison()!.pages.removed.length }} removed ·
+              {{ comparison()!.pages.changed.length }} changed
+            </p>
+          </div>
+        }
         @if (versions().length === 0) {
           <div class="state empty">
             <h3>No versions yet</h3>
@@ -128,10 +161,36 @@ import { ProjectsApiService } from '../core/projects-api.service';
                     ]"
                     >Open workspace →</a
                   >
+                  <div class="version-actions">
+                    <button
+                      type="button"
+                      [class.selected]="compareSelection().includes(version.id)"
+                      (click)="toggleCompare(version.id)"
+                    >
+                      Compare
+                    </button>
+                    <button
+                      type="button"
+                      [disabled]="copying()"
+                      (click)="copyVersion(version, 'DUPLICATE')"
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      type="button"
+                      [disabled]="copying()"
+                      (click)="copyVersion(version, 'RESTORE')"
+                    >
+                      Restore
+                    </button>
+                  </div>
                 </div>
               </li>
             }
           </ol>
+          @if (historyError()) {
+            <p class="form-error" role="alert">{{ historyError() }}</p>
+          }
         }
       </section>
     }
@@ -148,6 +207,11 @@ export class ProjectDetailComponent implements OnInit {
   readonly showVersionForm = signal(false);
   readonly savingVersion = signal(false);
   readonly versionError = signal(false);
+  readonly historyError = signal('');
+  readonly copying = signal(false);
+  readonly comparing = signal(false);
+  readonly compareSelection = signal<string[]>([]);
+  readonly comparison = signal<ProjectVersionComparisonResponse | null>(null);
   readonly versionForm = this.fb.nonNullable.group({
     label: ['', [Validators.required, Validators.maxLength(120)]],
     instructionsSnapshot: [
@@ -211,5 +275,63 @@ export class ProjectDetailComponent implements OnInit {
           this.savingVersion.set(false);
         },
       });
+  }
+
+  toggleCompare(versionId: string) {
+    this.comparison.set(null);
+    this.compareSelection.update((items) =>
+      items.includes(versionId)
+        ? items.filter((id) => id !== versionId)
+        : [...items.slice(-1), versionId],
+    );
+  }
+
+  compareVersions() {
+    const project = this.project();
+    const [left, right] = this.compareSelection();
+    if (!project || !left || !right || this.comparing()) return;
+    this.comparing.set(true);
+    this.historyError.set('');
+    this.api.compareVersions(project.id, left, right).subscribe({
+      next: (comparison) => {
+        this.comparison.set(comparison);
+        this.comparing.set(false);
+      },
+      error: () => {
+        this.historyError.set('The selected versions could not be compared.');
+        this.comparing.set(false);
+      },
+    });
+  }
+
+  copyVersion(version: ProjectVersionResponse, mode: 'DUPLICATE' | 'RESTORE') {
+    const project = this.project();
+    if (!project || this.copying()) return;
+    this.copying.set(true);
+    this.historyError.set('');
+    const request =
+      mode === 'DUPLICATE'
+        ? this.api.duplicateVersion(
+            project.id,
+            version.id,
+            `${version.label} copy`,
+          )
+        : this.api.restoreVersion(
+            project.id,
+            version.id,
+            `Restore v${version.versionNumber}: ${version.label}`,
+          );
+    request.subscribe({
+      next: (created) => {
+        this.versions.update((items) => [created, ...items]);
+        this.copying.set(false);
+      },
+      error: () => {
+        this.historyError.set(
+          'Only a validated generated version can be duplicated or restored.',
+        );
+        this.copying.set(false);
+      },
+    });
   }
 }

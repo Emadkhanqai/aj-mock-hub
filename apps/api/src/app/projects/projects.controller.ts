@@ -11,9 +11,11 @@ import type {
   ProjectResponse,
   ProjectVersionListResponse,
   ProjectVersionResponse,
+  ProjectVersionComparisonResponse,
 } from '@aj-mock-hub/contracts';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateProjectVersionDto } from './dto/create-project-version.dto';
+import { CopyProjectVersionDto } from './dto/copy-project-version.dto';
 import { ProjectsService } from './projects.service';
 
 @Controller('projects')
@@ -58,5 +60,40 @@ export class ProjectsController {
     @Param('versionId', new ParseUUIDPipe({ version: '4' })) versionId: string,
   ): Promise<ProjectVersionResponse> {
     return this.projectsService.getVersion(projectId, versionId);
+  }
+
+  @Post(':projectId/versions/:versionId/duplicate')
+  duplicateVersion(
+    @Param('projectId', new ParseUUIDPipe({ version: '4' })) projectId: string,
+    @Param('versionId', new ParseUUIDPipe({ version: '4' })) versionId: string,
+    @Body() input: CopyProjectVersionDto,
+  ): Promise<ProjectVersionResponse> {
+    return this.projectsService.duplicateVersion(
+      projectId,
+      versionId,
+      input.label,
+    );
+  }
+
+  @Post(':projectId/versions/:versionId/restore')
+  restoreVersion(
+    @Param('projectId', new ParseUUIDPipe({ version: '4' })) projectId: string,
+    @Param('versionId', new ParseUUIDPipe({ version: '4' })) versionId: string,
+    @Body() input: CopyProjectVersionDto,
+  ): Promise<ProjectVersionResponse> {
+    return this.projectsService.restoreVersion(
+      projectId,
+      versionId,
+      input.label,
+    );
+  }
+
+  @Get(':projectId/versions/:leftVersionId/compare/:rightVersionId')
+  compareVersions(
+    @Param('projectId', new ParseUUIDPipe({ version: '4' })) projectId: string,
+    @Param('leftVersionId', new ParseUUIDPipe({ version: '4' })) left: string,
+    @Param('rightVersionId', new ParseUUIDPipe({ version: '4' })) right: string,
+  ): Promise<ProjectVersionComparisonResponse> {
+    return this.projectsService.compareVersions(projectId, left, right);
   }
 }

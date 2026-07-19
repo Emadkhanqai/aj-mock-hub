@@ -1,13 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type {
   ProjectResponse,
   ProjectVersionResponse,
   RequirementDocumentResponse,
+  StaticPreviewResponse,
   UiSpecificationResponse,
 } from '@aj-mock-hub/contracts';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, switchMap, takeWhile, timer } from 'rxjs';
 import { ProjectsApiService } from '../core/projects-api.service';
 
 @Component({
@@ -222,6 +224,19 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   {{ generating() ? 'Queueing…' : 'Generate Angular app' }}
                 </button>
               </div>
+              @if (preview()) {
+                <a
+                  class="button preview-link"
+                  [routerLink]="[
+                    '/projects',
+                    projectId,
+                    'versions',
+                    versionId,
+                    'preview',
+                  ]"
+                  >Open validated preview →</a
+                >
+              }
               @if (generationStatus()) {
                 <p class="generation-status" role="status">
                   {{ generationStatus() }}
@@ -237,6 +252,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
 export class VersionWorkspaceComponent implements OnInit {
   private readonly api = inject(ProjectsApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
   readonly versionId = this.route.snapshot.paramMap.get('versionId') ?? '';
   readonly project = signal<ProjectResponse | null>(null);
@@ -253,6 +269,7 @@ export class VersionWorkspaceComponent implements OnInit {
   readonly actionError = signal('');
   readonly generating = signal(false);
   readonly generationStatus = signal('');
+  readonly preview = signal<StaticPreviewResponse | null>(null);
   readonly specificationJson = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required],
@@ -271,12 +288,16 @@ export class VersionWorkspaceComponent implements OnInit {
       specification: this.api
         .getSpecification(this.projectId, this.versionId)
         .pipe(catchError(() => of(null))),
+      preview: this.api
+        .getPreview(this.projectId, this.versionId)
+        .pipe(catchError(() => of(null))),
     }).subscribe({
-      next: ({ project, version, documents, specification }) => {
+      next: ({ project, version, documents, specification, preview }) => {
         this.project.set(project);
         this.version.set(version);
         this.documents.set(documents.items);
         if (specification) this.setSpecification(specification);
+        this.preview.set(preview);
         this.loading.set(false);
       },
       error: () => {
@@ -399,6 +420,11 @@ export class VersionWorkspaceComponent implements OnInit {
               : 'Angular generation queued for isolated validation.',
           );
           this.generating.set(false);
+          if (!['COMPLETED', 'FAILED', 'CANCELLED'].includes(job.status)) {
+            this.pollGeneration(job.id);
+          } else if (job.status === 'COMPLETED') {
+            this.loadPreview();
+          }
         },
         error: () => {
           this.actionError.set(
@@ -427,6 +453,42 @@ export class VersionWorkspaceComponent implements OnInit {
   private reloadDocuments() {
     this.api.listDocuments(this.projectId, this.versionId).subscribe({
       next: ({ items }) => this.documents.set(items),
+    });
+  }
+
+  private pollGeneration(jobId: string) {
+    timer(0, 1500)
+      .pipe(
+        switchMap(() => this.api.getPipelineJob(this.projectId, jobId)),
+        takeWhile(
+          (job) => !['COMPLETED', 'FAILED', 'CANCELLED'].includes(job.status),
+          true,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (job) => {
+          this.generationStatus.set(`Angular generation: ${job.status}.`);
+          if (job.status === 'COMPLETED') this.loadPreview();
+          if (job.status === 'FAILED') {
+            this.actionError.set(
+              'Angular generation failed isolated validation. Review the job logs.',
+            );
+          }
+        },
+        error: () =>
+          this.actionError.set('Generation status could not be refreshed.'),
+      });
+  }
+
+  private loadPreview() {
+    this.api.getPreview(this.projectId, this.versionId).subscribe({
+      next: (preview) => {
+        this.preview.set(preview);
+        this.generationStatus.set('Validated static preview published.');
+      },
+      error: () =>
+        this.actionError.set('The validated preview could not be loaded.'),
     });
   }
 }

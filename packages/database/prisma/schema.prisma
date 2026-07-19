@@ -19,12 +19,24 @@ enum ProjectVersionStatus {
 
 enum ProjectVersionSourceType {
   MANUAL
+  REVISION
+  DUPLICATE
+  RESTORE
 }
 
 enum PipelineJobType {
   WORKSPACE_PREPARATION
   ISOLATED_BUILD
   ANGULAR_GENERATION
+  TARGETED_REVISION
+}
+
+enum DraftRevisionStatus {
+  VALIDATING
+  READY
+  ACCEPTED
+  DISCARDED
+  FAILED
 }
 
 enum PipelineJobStatus {
@@ -65,6 +77,8 @@ model Project {
   jobs           PipelineJob[]
   documents      RequirementDocument[]
   specifications UiSpecification[]
+  previews       StaticPreview[]
+  revisions      DraftRevision[]
 
   @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
   @@map("projects")
@@ -83,6 +97,9 @@ model ProjectVersion {
   jobs                 PipelineJob[]
   documents            RequirementDocument[]
   specification        UiSpecification?
+  preview              StaticPreview?
+  baseRevisions         DraftRevision[] @relation("RevisionBaseVersion")
+  acceptedRevision      DraftRevision?  @relation("RevisionAcceptedVersion")
 
   @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
   @@map("project_versions")
@@ -145,11 +162,66 @@ model PipelineJob {
   project                 Project           @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   projectVersion          ProjectVersion    @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   logs                    PipelineJobLog[]
+  previews                 StaticPreview[]
+  revision                 DraftRevision?
 
   @@unique([projectVersionId, idempotencyKey], map: "pipeline_jobs_version_idempotency_key")
   @@index([projectId, createdAt(sort: Desc)], map: "pipeline_jobs_project_created_at_idx")
   @@index([status, createdAt], map: "pipeline_jobs_status_created_at_idx")
   @@map("pipeline_jobs")
+}
+
+model StaticPreview {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId        String         @map("project_id") @db.Uuid
+  projectVersionId String         @unique(map: "static_previews_project_version_id_key") @map("project_version_id") @db.Uuid
+  sourceJobId      String         @map("source_job_id") @db.Uuid
+  storagePrefix    String         @map("storage_prefix") @db.VarChar(500)
+  entryFile        String         @default("index.html") @map("entry_file") @db.VarChar(120)
+  contentHash      String         @map("content_hash") @db.Char(64)
+  fileCount        Int            @map("file_count")
+  totalBytes       Int            @map("total_bytes")
+  publishedAt      DateTime       @default(now()) @map("published_at") @db.Timestamptz(3)
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  projectVersion   ProjectVersion @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourceJob        PipelineJob    @relation(fields: [sourceJobId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([projectId, publishedAt(sort: Desc)], map: "static_previews_project_published_at_idx")
+  @@index([sourceJobId], map: "static_previews_source_job_id_idx")
+  @@index([storagePrefix], map: "static_previews_storage_prefix_idx")
+  @@map("static_previews")
+}
+
+model DraftRevision {
+  id                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId                String              @map("project_id") @db.Uuid
+  baseProjectVersionId     String              @map("base_project_version_id") @db.Uuid
+  acceptedProjectVersionId String?             @unique(map: "draft_revisions_accepted_version_id_key") @map("accepted_project_version_id") @db.Uuid
+  pipelineJobId            String              @unique(map: "draft_revisions_pipeline_job_id_key") @map("pipeline_job_id") @db.Uuid
+  status                   DraftRevisionStatus @default(VALIDATING)
+  instruction              String              @db.VarChar(2000)
+  replacementText          String              @map("replacement_text") @db.VarChar(120)
+  targetPageId             String              @map("target_page_id") @db.VarChar(120)
+  targetElementId          String              @map("target_element_id") @db.VarChar(240)
+  targetElementType        String              @map("target_element_type") @db.VarChar(80)
+  targetFile               String              @map("target_file") @db.VarChar(240)
+  targetLabel              String              @map("target_label") @db.VarChar(240)
+  specificationContent     Json?               @map("specification_content") @db.JsonB
+  previewStoragePrefix     String?             @map("preview_storage_prefix") @db.VarChar(500)
+  previewContentHash       String?             @map("preview_content_hash") @db.Char(64)
+  previewFileCount         Int?                @map("preview_file_count")
+  previewTotalBytes        Int?                @map("preview_total_bytes")
+  errorMessage             String?             @map("error_message") @db.VarChar(500)
+  createdAt                DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  project                  Project             @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  baseProjectVersion       ProjectVersion      @relation("RevisionBaseVersion", fields: [baseProjectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  acceptedProjectVersion   ProjectVersion?     @relation("RevisionAcceptedVersion", fields: [acceptedProjectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  pipelineJob              PipelineJob         @relation(fields: [pipelineJobId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc)], map: "draft_revisions_project_created_at_idx")
+  @@index([baseProjectVersionId, createdAt(sort: Desc)], map: "draft_revisions_base_version_created_at_idx")
+  @@map("draft_revisions")
 }
 
 model PipelineJobLog {

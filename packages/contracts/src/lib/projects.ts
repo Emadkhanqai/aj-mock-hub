@@ -1,6 +1,10 @@
 export type ProjectStatus = 'ACTIVE';
 export type ProjectVersionStatus = 'DRAFT';
-export type ProjectVersionSourceType = 'MANUAL';
+export type ProjectVersionSourceType =
+  | 'MANUAL'
+  | 'REVISION'
+  | 'DUPLICATE'
+  | 'RESTORE';
 
 export interface CreateProjectRequest {
   name: string;
@@ -38,4 +42,19 @@ export interface ProjectVersionResponse {
 
 export interface ProjectVersionListResponse {
   items: ProjectVersionResponse[];
+}
+
+export interface CopyProjectVersionRequest {
+  label: string;
+}
+
+export interface ProjectVersionComparisonResponse {
+  left: ProjectVersionResponse;
+  right: ProjectVersionResponse;
+  instructionsChanged: boolean;
+  pages: {
+    added: string[];
+    removed: string[];
+    changed: string[];
+  };
 }

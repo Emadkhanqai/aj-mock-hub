@@ -35,6 +35,7 @@ These documents define product purpose, architecture, milestone boundaries, exec
 - Add tests for behavior changes.
 - Before marking work complete, run formatting checks, lint, tests, and builds for all affected projects.
 - Do not add features deferred beyond the currently approved milestone.
+- Resolve local port conflicts autonomously by identifying the owner and moving the AJ Mock Hub localhost binding to a free configurable port. Do not blindly stop or reconfigure unrelated services.
 
 ## Autonomous direct-main delivery workflow
 

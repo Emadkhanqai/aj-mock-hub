@@ -5,6 +5,7 @@ import {
   ISOLATED_BUILD_JOB,
   ANGULAR_GENERATION_JOB,
   createPipelineQueue,
+  TARGETED_REVISION_JOB,
 } from '@aj-mock-hub/job-queue';
 
 @Injectable()
@@ -22,6 +23,13 @@ export class PipelineQueueService implements OnModuleDestroy {
 
   async enqueueGeneration(data: PipelineQueueData): Promise<void> {
     await this.resources.queue.add(ANGULAR_GENERATION_JOB, data, {
+      ...PIPELINE_JOB_OPTIONS,
+      jobId: data.pipelineJobId,
+    });
+  }
+
+  async enqueueRevision(data: PipelineQueueData): Promise<void> {
+    await this.resources.queue.add(TARGETED_REVISION_JOB, data, {
       ...PIPELINE_JOB_OPTIONS,
       jobId: data.pipelineJobId,
     });

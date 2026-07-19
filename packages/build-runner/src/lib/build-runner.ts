@@ -7,6 +7,7 @@ export interface BuildRunRequest {
   jobId: string;
   workspacePath: string;
   command: ApprovedBuildCommand;
+  outputPath?: string;
 }
 
 export interface BuildRunResult {
@@ -61,6 +62,13 @@ export class DockerBuildRunner {
     if (!workspace.startsWith(`${this.workspaceRoot}${sep}`)) {
       throw new Error('Build workspace escapes its configured root');
     }
+    const output = request.outputPath ? resolve(request.outputPath) : undefined;
+    if (output && !output.startsWith(`${this.workspaceRoot}${sep}`)) {
+      throw new Error('Build output escapes its configured root');
+    }
+    if (output && request.command !== 'build') {
+      throw new Error('Build output is available only for the build command');
+    }
     const containerName = `ajmh-builder-${request.jobId}`;
     return this.execute({
       executable: 'docker',
@@ -92,6 +100,7 @@ export class DockerBuildRunner {
         '10001:10001',
         '--volume',
         `${workspace}:/input:ro`,
+        ...(output ? ['--volume', `${output}:/output`] : []),
         this.image,
         request.command,
       ],

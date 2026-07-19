@@ -20,3 +20,11 @@ ln -s /opt/template/node_modules node_modules
 cleanup() { rm -f node_modules; }
 trap cleanup EXIT INT TERM
 npm run "$command"
+
+if [ "$command" = "build" ] && [ -d /output ]; then
+  if [ -d /workspace/dist/browser ]; then
+    cp -R /workspace/dist/browser/. /output/
+  else
+    cp -R /workspace/dist/. /output/
+  fi
+fi

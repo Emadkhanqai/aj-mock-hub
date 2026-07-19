@@ -5,6 +5,7 @@ import {
   PIPELINE_JOB_OPTIONS,
   ISOLATED_BUILD_JOB,
   ANGULAR_GENERATION_JOB,
+  TARGETED_REVISION_JOB,
   createPipelineQueue,
 } from '@aj-mock-hub/job-queue';
 import { PipelineWorkerService } from './pipeline-worker.service';
@@ -219,7 +220,7 @@ describe('Pipeline worker integration', () => {
     expect(completed.logs.map(({ message }) => message)).toEqual(
       expect.arrayContaining([
         'Generated 5 controlled Angular project files.',
-        'Angular generation and isolated validation completed.',
+        'Angular generation, validation and preview publishing completed.',
       ]),
     );
     const workspaceRoot = process.env['WORKSPACE_ROOT'];
@@ -231,6 +232,72 @@ describe('Pipeline worker integration', () => {
     await expect(
       readFile(join(source, 'ui-specification.json'), 'utf8'),
     ).resolves.toContain('"dashboard"');
+    const preview = await prisma.staticPreview.findUnique({
+      where: { projectVersionId: version.id },
+    });
+    expect(preview).toMatchObject({
+      sourceJobId: pipelineJob.id,
+      entryFile: 'index.html',
+    });
+    expect(preview?.fileCount).toBeGreaterThan(0);
+
+    const revisionJob = await prisma.pipelineJob.create({
+      data: {
+        projectId: project.id,
+        projectVersionId: version.id,
+        type: 'TARGETED_REVISION',
+        idempotencyKey: 'revision-integration',
+        logs: {
+          create: {
+            sequence: 1,
+            level: 'INFO',
+            message: 'Targeted revision queued for isolated validation.',
+          },
+        },
+      },
+    });
+    const revision = await prisma.draftRevision.create({
+      data: {
+        projectId: project.id,
+        baseProjectVersionId: version.id,
+        pipelineJobId: revisionJob.id,
+        instruction: 'Rename the first dashboard component.',
+        replacementText: 'Operations overview',
+        targetPageId: 'dashboard',
+        targetElementId: 'dashboard:component:0',
+        targetElementType: 'component',
+        targetFile: 'src/main.ts',
+        targetLabel: 'Service overview',
+      },
+    });
+    await queueResources.queue.add(
+      TARGETED_REVISION_JOB,
+      {
+        pipelineJobId: revisionJob.id,
+        projectId: project.id,
+        projectVersionId: version.id,
+        versionNumber: 1,
+      },
+      { ...PIPELINE_JOB_OPTIONS, jobId: revisionJob.id },
+    );
+
+    const revisedJob = await waitForTerminalState(revisionJob.id);
+    expect(revisedJob.status).toBe('COMPLETED');
+    const readyRevision = await prisma.draftRevision.findUniqueOrThrow({
+      where: { id: revision.id },
+    });
+    expect(readyRevision.status).toBe('READY');
+    expect(readyRevision.previewStoragePrefix).toContain(revision.id);
+    const revisionSource = join(
+      workspaceRoot,
+      project.id,
+      'revisions',
+      revision.id,
+      'source',
+    );
+    await expect(
+      readFile(join(revisionSource, 'src', 'main.ts'), 'utf8'),
+    ).resolves.toContain('Operations overview');
   });
 
   async function waitForTerminalState(jobId: string) {

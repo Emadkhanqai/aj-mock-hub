@@ -10,6 +10,13 @@ import {
   ProjectVersionResponse,
   RequirementDocumentListResponse,
   RequirementDocumentResponse,
+  StaticPreviewResponse,
+  AcceptDraftRevisionResponse,
+  CreateDraftRevisionRequest,
+  DraftRevisionListResponse,
+  DraftRevisionResponse,
+  ProjectVersionComparisonResponse,
+  PipelineJobDetailResponse,
   UiSpecificationResponse,
   UpdateUiSpecificationRequest,
 } from '@aj-mock-hub/contracts';
@@ -107,6 +114,75 @@ export class ProjectsApiService {
     return this.http.post<CreatePipelineJobResponse>(
       `/api/projects/${projectId}/versions/${versionId}/generation-jobs`,
       { idempotencyKey },
+    );
+  }
+
+  getPipelineJob(projectId: string, jobId: string) {
+    return this.http.get<PipelineJobDetailResponse>(
+      `/api/projects/${projectId}/jobs/${jobId}`,
+    );
+  }
+
+  getPreview(projectId: string, versionId: string) {
+    return this.http.get<StaticPreviewResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/preview`,
+    );
+  }
+
+  createRevision(
+    projectId: string,
+    versionId: string,
+    request: CreateDraftRevisionRequest,
+  ) {
+    return this.http.post<DraftRevisionResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/revisions`,
+      request,
+    );
+  }
+
+  listRevisions(projectId: string, versionId: string) {
+    return this.http.get<DraftRevisionListResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/revisions`,
+    );
+  }
+
+  getRevision(projectId: string, revisionId: string) {
+    return this.http.get<DraftRevisionResponse>(
+      `/api/projects/${projectId}/revisions/${revisionId}`,
+    );
+  }
+
+  discardRevision(projectId: string, revisionId: string) {
+    return this.http.post<DraftRevisionResponse>(
+      `/api/projects/${projectId}/revisions/${revisionId}/discard`,
+      {},
+    );
+  }
+
+  acceptRevision(projectId: string, revisionId: string, label: string) {
+    return this.http.post<AcceptDraftRevisionResponse>(
+      `/api/projects/${projectId}/revisions/${revisionId}/accept`,
+      { label },
+    );
+  }
+
+  duplicateVersion(projectId: string, versionId: string, label: string) {
+    return this.http.post<ProjectVersionResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/duplicate`,
+      { label },
+    );
+  }
+
+  restoreVersion(projectId: string, versionId: string, label: string) {
+    return this.http.post<ProjectVersionResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/restore`,
+      { label },
+    );
+  }
+
+  compareVersions(projectId: string, leftId: string, rightId: string) {
+    return this.http.get<ProjectVersionComparisonResponse>(
+      `/api/projects/${projectId}/versions/${leftId}/compare/${rightId}`,
     );
   }
 }

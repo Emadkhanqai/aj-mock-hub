@@ -17,6 +17,7 @@ describe('DockerBuildRunner', () => {
       jobId: '11111111-1111-4111-8111-111111111111',
       workspacePath: '/safe/workspaces/project/versions/001/source',
       command: 'build',
+      outputPath: '/safe/workspaces/project/versions/001/preview-staging',
     });
     const execution = execute.mock.calls[0][0];
     expect(execution.executable).toBe('docker');
@@ -31,6 +32,7 @@ describe('DockerBuildRunner', () => {
         '256',
         '--security-opt',
         'no-new-privileges',
+        '/safe/workspaces/project/versions/001/preview-staging:/output',
       ]),
     );
     expect(execution.args.join(' ')).not.toContain('docker.sock');
@@ -59,5 +61,13 @@ describe('DockerBuildRunner', () => {
         command: 'shell' as never,
       }),
     ).toThrow('not approved');
+    expect(() =>
+      runner.run({
+        jobId: '11111111-1111-4111-8111-111111111111',
+        workspacePath: '/safe/workspaces/project',
+        outputPath: '/unsafe/output',
+        command: 'build',
+      }),
+    ).toThrow('output escapes');
   });
 });

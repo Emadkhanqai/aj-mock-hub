@@ -756,6 +756,62 @@ main.route-entering {
   align-items: start;
 }
 
+:host ::ng-deep .preview-link {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+:host ::ng-deep .compare-toolbar,
+:host ::ng-deep .comparison-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(124, 246, 195, 0.16);
+  border-radius: 14px;
+  color: #9aaba2;
+  background: rgba(13, 21, 18, 0.72);
+}
+
+:host ::ng-deep .comparison-card {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+:host ::ng-deep .comparison-card strong {
+  color: #7cf6c3;
+}
+
+:host ::ng-deep .comparison-card p {
+  margin: 0;
+}
+
+:host ::ng-deep .version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+:host ::ng-deep .version-actions button {
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  color: #8fa099;
+  background: transparent;
+  cursor: pointer;
+}
+
+:host ::ng-deep .version-actions button.selected {
+  border-color: rgba(124, 246, 195, 0.45);
+  color: #7cf6c3;
+  background: rgba(124, 246, 195, 0.08);
+}
+
 :host ::ng-deep .requirements-rail {
   display: grid;
   gap: 20px;

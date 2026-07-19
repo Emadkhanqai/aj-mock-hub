@@ -90,12 +90,16 @@ Status: completed.
 
 ## Milestone 6 — Preview and revisions
 
-- Static preview.
-- Responsive preview modes.
-- Element selection.
-- Targeted revisions.
-- Draft, accept, and discard flow.
-- Compare, restore, and duplicate versions without overwriting accepted versions.
+Status: completed.
+
+Delivered:
+
+- Static previews published only after isolated lint, test, and build succeed.
+- Desktop, tablet, and mobile preview modes.
+- Stable component selection with element ID, type, page, and source file.
+- Controlled component-label revisions validated in disposable containers.
+- Temporary draft preview, accepted-versus-draft switching, accept, and discard.
+- Version comparison, restore, and duplicate operations that always create new immutable versions.
 
 ## Milestone 7 — Developer handoff
 

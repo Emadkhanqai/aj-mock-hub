@@ -61,7 +61,8 @@ Local endpoints:
 - Web: `http://localhost:4200`
 - API health: `http://127.0.0.1:3000/api/health`
 - Worker health: `http://127.0.0.1:3001/worker/health`
-- MinIO console: `http://127.0.0.1:9001`
+- MinIO API: `http://127.0.0.1:19000`
+- MinIO console: `http://127.0.0.1:19001`
 - Mailpit: `http://127.0.0.1:8025`
 
 ## Verify the workspace
@@ -103,6 +104,8 @@ storage                  Ignored local and generated data
 
 Normal development runs the applications directly on macOS for fast feedback. PostgreSQL, Redis, MinIO, and Mailpit run in Docker Compose and bind only to localhost. See [docs/decisions.md](docs/decisions.md) for the rationale and future Azure mapping.
 
+Local host ports are configurable in the ignored `.env` file. AJ Mock Hub uses `19000` and `19001` for MinIO by default to avoid the common local SonarQube binding on `9000`. If a configured port is occupied, identify its owner first and move only the AJ Mock Hub binding to another free localhost port; do not stop unrelated services.
+
 ## Project API
 
 The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1.
@@ -115,9 +118,13 @@ For a version, open its requirements workspace in the Angular application. The w
 4. Correct and save the specification.
 5. Approve it permanently.
 6. Queue staged Angular generation. The worker writes only controlled files and validates them in the isolated builder container.
+7. Open the validated static preview in desktop, tablet, or mobile mode.
+8. Select a generated component, create a controlled draft revision, compare it with the accepted preview, then accept it as a new immutable version or discard it.
+
+Validated preview files are stored in the `previews` MinIO bucket. The management app renders them in an opaque sandbox; generated code cannot access AJ Mock Hub state or make network requests. Version history supports comparison, duplication, and restoration by creating new versions rather than overwriting existing ones.
 
 Uploaded binaries and extracted text are stored in MinIO behind the storage abstraction. PostgreSQL stores metadata and the structured specification, not document bodies.
 
 ## Current scope
 
-Milestone 5 includes requirements documents, structured extraction, specification correction and approval, a provider-neutral Azure OpenAI adapter, and controlled staged Angular generation. It does not include preview publishing, targeted revisions, ZIP exports, email sending, authentication, Azure resource deployment, or GitHub integration.
+Milestone 6 includes requirements-to-generation from Milestone 5 plus validated static previews, responsive preview modes, stable element selection, controlled component-label revisions, draft accept/discard, and compare/restore/duplicate version flows. ZIP exports, email sending, authentication, preview sharing, retention cleanup, Azure resource deployment, and GitHub integration remain deferred.

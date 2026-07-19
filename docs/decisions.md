@@ -12,6 +12,8 @@ The repository pins Node.js 22 because it is an active long-term-support line wi
 
 During normal development, the Angular frontend and NestJS processes run directly on macOS. This keeps file watching, debugging, dependency installation, and editor integration fast and transparent. Docker Compose is limited to PostgreSQL, Redis, MinIO, and Mailpit, which gives the team reproducible stateful dependencies without containerizing the inner development loop.
 
+Docker service host ports are localhost-only and configurable through the ignored local environment. MinIO defaults to ports `19000` and `19001` because port `9000` is commonly occupied by local SonarQube. When a conflict occurs, the process or container owning the port is identified first and AJ Mock Hub is moved to a free localhost binding; unrelated services are not stopped automatically.
+
 ## Isolated builds
 
 Generated projects are untrusted inputs. Every Angular validation runs in a disposable, constrained container with controlled resources, time limits, disabled networking, and no host Docker socket mounted inside it. Generated applications are never executed directly on the host.
@@ -74,7 +76,15 @@ Local development defaults to a deterministic offline provider so tests and norm
 
 The approved UI specification is transformed into a fixed allowlist of Angular project files. File paths are chosen by trusted application code, confined beneath the version workspace, and cannot contain traversal segments. User and model text is serialized as data rather than interpreted as a path or command. The worker then invokes only `lint`, `test`, and `build` through the existing disposable, network-disabled builder container; generated source is never executed on the host.
 
-The current stage emits an Angular application shell, responsive page navigation, component placeholders, a test, the approved UI specification, and developer setup documentation. Preview hosting and element-level revisions remain separate milestones.
+The generation stage emits an Angular application shell, responsive page navigation, selectable component placeholders, a test, the approved UI specification, and developer setup documentation.
+
+## Static previews and draft revisions
+
+Only the disposable builder container can produce preview files. Its validated `dist` output is copied through a dedicated writable output mount, bounded to 500 files and 25 MB, hashed, and published to a separate MinIO bucket. PostgreSQL stores immutable preview metadata; API responses never expose MinIO object keys. Preview files are served with strict content types, CSP, no-sniff, and no-referrer headers.
+
+The management application embeds generated previews in a script-enabled sandbox without `allow-same-origin`. Preview assets permit read-only cross-origin loading for the opaque sandbox, while `connect-src 'none'` prevents generated code from making network requests. Component selection communicates only an allowlisted metadata object through `postMessage`; the parent validates the message source and fields.
+
+Targeted changes are temporary `DraftRevision` records and never mutate their base version. The first controlled revision operation replaces one selected component label in the approved UI specification, regenerates only the trusted file set, and repeats isolated lint, test, and build. A ready draft may be discarded or accepted. Acceptance creates a sequential new immutable `ProjectVersion`, approved specification, source workspace, and static preview reference. Duplicate and restore also create new versions, and comparison is metadata/specification based.
 
 ## Deferred decisions
 
@@ -83,6 +93,6 @@ Later milestones will decide and implement:
 - Additional model providers and model-evaluation policy
 - ZIP handoff format
 - Email delivery, authentication, and authorization
-- Preview hosting and retention
+- Preview retention and cleanup policy
 - Detailed Azure service selection, networking, identity, and deployment automation
 - GitHub integration, which is explicitly outside the MVP

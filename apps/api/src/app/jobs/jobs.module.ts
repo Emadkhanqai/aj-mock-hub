@@ -8,5 +8,6 @@ import { PipelineQueueService } from './pipeline-queue.service';
   imports: [DatabaseModule],
   controllers: [JobsController],
   providers: [JobsService, PipelineQueueService],
+  exports: [PipelineQueueService],
 })
 export class JobsModule {}
