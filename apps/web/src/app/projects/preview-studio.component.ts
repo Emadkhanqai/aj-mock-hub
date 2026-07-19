@@ -369,10 +369,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
     `
       :host {
         display: block;
+        width: 100%;
+        min-width: 0;
+        overflow-x: clip;
       }
       .preview-studio {
-        width: min(1600px, calc(100vw - 32px));
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 1600px;
         margin: 0 auto;
+        padding: 18px;
       }
       .preview-back {
         display: inline-flex;
@@ -402,11 +408,17 @@ import { ProjectsApiService } from '../core/projects-api.service';
         color: #96a59e;
       }
       .preview-toolbar {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) auto;
         align-items: end;
-        justify-content: space-between;
         gap: 18px;
         margin-bottom: 12px;
+      }
+      .preview-toolbar > div,
+      .preview-controls,
+      .studio-grid,
+      .preview-canvas {
+        min-width: 0;
       }
       .preview-toolbar small,
       .inspector-panel > small {
@@ -437,6 +449,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
       }
       .preview-controls {
         display: flex;
+        max-width: 100%;
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
@@ -620,6 +633,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
       }
       .studio-grid {
         position: relative;
+        width: 100%;
+        min-width: 0;
       }
       .preview-canvas,
       .inspector-panel {
@@ -630,6 +645,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
       }
       .preview-canvas {
         width: 100%;
+        min-width: 0;
+        overflow: hidden;
       }
       .browser-chrome {
         height: 38px;
@@ -892,13 +909,10 @@ import { ProjectsApiService } from '../core/projects-api.service';
       .inspector-panel code {
         color: #a6b7ae;
       }
-      @media (max-width: 980px) {
-        .preview-studio {
-          width: min(100% - 28px, 1500px);
-        }
+      @media (max-width: 1120px) {
         .preview-toolbar {
           align-items: flex-start;
-          flex-direction: column;
+          grid-template-columns: 1fr;
         }
         .preview-controls {
           width: 100%;
@@ -928,6 +942,11 @@ import { ProjectsApiService } from '../core/projects-api.service';
         }
         .device-frame {
           height: 600px;
+        }
+      }
+      @media (max-width: 980px) {
+        .preview-studio {
+          padding: 14px;
         }
       }
       @media (max-width: 620px) {

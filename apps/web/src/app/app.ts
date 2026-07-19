@@ -26,6 +26,7 @@ export class App {
   protected readonly title = 'AJ Mock Hub';
   protected readonly booting = signal(true);
   protected readonly routeEntering = signal(false);
+  protected readonly previewMode = signal(this.isPreviewUrl(this.router.url));
   protected readonly soundEnabled = signal(
     typeof localStorage === 'undefined' ||
       localStorage.getItem('aj-mock-hub:sound') !== 'off',
@@ -49,6 +50,7 @@ export class App {
           this.routeEntering.set(false);
           return;
         }
+        this.previewMode.set(this.isPreviewUrl(event.urlAfterRedirects));
         this.routeEntering.set(true);
         clearTimeout(this.transitionTimer);
         this.transitionTimer = setTimeout(
@@ -98,5 +100,9 @@ export class App {
     gain.connect(this.audioContext.destination);
     oscillator.start(now);
     oscillator.stop(now + 0.19);
+  }
+
+  private isPreviewUrl(url: string): boolean {
+    return /^\/projects\/[^/]+\/versions\/[^/]+\/preview(?:[?#].*)?$/.test(url);
   }
 }

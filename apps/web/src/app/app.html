@@ -2,13 +2,20 @@
 <app-boot-splash (finished)="finishBoot()" />
 }
 
-<div class="shell" (pointerdown)="unlockSound()">
+<div
+  class="shell"
+  [class.preview-shell]="previewMode()"
+  (pointerdown)="unlockSound()"
+>
+  @if (!previewMode()) {
   <app-depth-scene />
+  }
   <div
     class="scene-stage"
     [class.scene-stage-ready]="!booting()"
     [attr.aria-hidden]="booting() ? 'true' : null"
   >
+    @if (!previewMode()) {
     <nav class="nav" aria-label="Primary navigation">
       <a class="brand" routerLink="/projects" aria-label="AJ Mock Hub projects">
         <span class="brand-mark">
@@ -80,9 +87,14 @@
         </button>
       </div>
     </nav>
-    <main [class.route-entering]="routeEntering()">
+    }
+    <main
+      [class.route-entering]="routeEntering()"
+      [class.preview-main]="previewMode()"
+    >
       <router-outlet></router-outlet>
     </main>
+    @if (!previewMode()) {
     <footer class="site-footer">
       <div>
         <span class="footer-mark">
@@ -95,5 +107,6 @@
       </div>
       <p>Local-first workspace · Built for immutable iteration</p>
     </footer>
+    }
   </div>
 </div>

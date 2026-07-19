@@ -30,6 +30,12 @@
   padding: 0 36px 96px;
 }
 
+.shell.preview-shell {
+  max-width: none;
+  padding: 0;
+  overflow-x: clip;
+}
+
 .scene-stage {
   position: relative;
   opacity: 0;
@@ -235,6 +241,12 @@
 main {
   min-height: calc(100vh - 270px);
   padding-top: 58px;
+}
+
+main.preview-main {
+  min-height: 100vh;
+  padding: 0;
+  overflow-x: clip;
 }
 
 main.route-entering {

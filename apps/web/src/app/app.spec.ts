@@ -1,12 +1,23 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
+
+@Component({ template: '' })
+class PreviewRouteStubComponent {}
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([
+          {
+            path: 'projects/:projectId/versions/:versionId/preview',
+            component: PreviewRouteStubComponent,
+          },
+        ]),
+      ],
     }).compileComponents();
   });
 
@@ -57,5 +68,25 @@ describe('App', () => {
     expect(
       compiled.querySelector('.scene-stage')?.getAttribute('aria-hidden'),
     ).toBeNull();
+  });
+
+  it('uses a dedicated shell for the preview route', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+
+    await router.navigateByUrl(
+      '/projects/project-1/versions/version-1/preview',
+    );
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.shell')?.classList).toContain(
+      'preview-shell',
+    );
+    expect(compiled.querySelector('main')?.classList).toContain('preview-main');
+    expect(compiled.querySelector('.nav')).toBeNull();
+    expect(compiled.querySelector('.site-footer')).toBeNull();
+    expect(compiled.querySelector('app-depth-scene')).toBeNull();
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
