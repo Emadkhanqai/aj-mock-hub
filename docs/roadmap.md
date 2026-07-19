@@ -116,13 +116,17 @@ Delivered:
 
 ## Milestone 8 — Demonstration and hardening
 
-- Seeded demonstration flow.
-- Failure recovery.
-- Cleanup and retention policies.
-- Security review.
-- Performance and resource limits.
-- Observability.
-- Azure migration documentation.
+Status: completed.
+
+Delivered:
+
+- Deterministic synthetic project with an approved generation-ready UI specification.
+- Documented and tested bounded failure recovery and idempotent retry behavior.
+- Safe cleanup/retention policy separating temporary data from immutable records.
+- End-to-end security review and residual-risk register.
+- Enforced builder, preview, upload, and export resource limits.
+- Dependency-aware API health, job diagnostics, and download auditing.
+- Actionable local-to-Azure migration runbook with approval gates.
 
 ## Cross-milestone invariants
 

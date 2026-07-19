@@ -52,4 +52,8 @@ export class PipelineQueueService implements OnModuleDestroy {
     await this.resources.queue.close();
     this.resources.connection.disconnect();
   }
+
+  async ping(): Promise<void> {
+    await this.resources.connection.ping();
+  }
 }

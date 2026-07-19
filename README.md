@@ -128,4 +128,6 @@ Uploaded binaries and extracted text are stored in MinIO behind the storage abst
 
 ## Current scope
 
-Milestone 7 includes the complete requirements-to-preview flow plus clean ZIP exports, signed downloads, Mailpit-compatible email sharing, and download auditing. Authentication, public preview sharing, retention cleanup, Azure resource deployment, and GitHub integration remain deferred.
+The local-first MVP roadmap through Milestone 8 is implemented: project/version management, requirements review, controlled Angular generation, isolated validation, static previews, targeted immutable revisions, comparison, clean developer handoff, signed sharing, auditing, health diagnostics, and a synthetic demonstration flow. Authentication, multi-tenancy, public preview sharing, production retention automation, live Azure deployment, and GitHub integration remain explicit post-MVP decisions.
+
+Operational guidance is in [docs/operations.md](docs/operations.md), the security review in [docs/security-review.md](docs/security-review.md), and the future Azure runbook in [docs/azure-migration.md](docs/azure-migration.md).

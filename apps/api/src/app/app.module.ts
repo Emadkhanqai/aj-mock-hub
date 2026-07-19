@@ -6,6 +6,7 @@ import { RequirementsModule } from './requirements/requirements.module';
 import { PreviewsModule } from './previews/previews.module';
 import { RevisionsModule } from './revisions/revisions.module';
 import { ExportsModule } from './exports/exports.module';
+import { DatabaseModule } from '@aj-mock-hub/database';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ExportsModule } from './exports/exports.module';
     PreviewsModule,
     RevisionsModule,
     ExportsModule,
+    DatabaseModule,
   ],
   controllers: [AppController],
   providers: [],
