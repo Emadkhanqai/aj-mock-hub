@@ -24,7 +24,6 @@ import { ProjectsApiService } from '../core/projects-api.service';
     } @else {
       <header class="detail-header">
         <div>
-          <p class="eyebrow">Project · {{ project()!.status }}</p>
           <h1>{{ project()!.name }}</h1>
           <p class="lede">
             {{ project()!.description || 'No description provided.' }}
@@ -59,11 +58,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
             ><input formControlName="label" maxlength="120"
           /></label>
           <label
-            ><span>Instructions snapshot</span
+            ><span
+              >Instructions snapshot
+              <em
+                >Describe the pages, workflows, data and visual direction.</em
+              ></span
             ><textarea
               formControlName="instructionsSnapshot"
               maxlength="20000"
               rows="8"
+              placeholder="Example: Create a responsive e-budgeting dashboard with budget overview, department allocations, expense tracking, approval workflow, charts, searchable tables, accessible forms and realistic mock data."
             ></textarea>
           </label>
           @if (versionError()) {

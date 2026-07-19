@@ -1,0 +1,76 @@
+<section
+  class="boot-splash"
+  role="status"
+  aria-live="polite"
+  aria-label="Loading AJ Mock Hub workspace"
+  (animationend)="finish($event)"
+>
+  <div class="boot-aura" aria-hidden="true"></div>
+  <div class="boot-identity">
+    <div class="boot-logo" aria-hidden="true">
+      <span class="boot-orbit boot-orbit-one"></span>
+      <span class="boot-orbit boot-orbit-two"></span>
+      <svg viewBox="0 0 64 64" focusable="false">
+        <defs>
+          <linearGradient
+            id="boot-surface"
+            x1="8"
+            y1="6"
+            x2="56"
+            y2="59"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="#dfff7a" />
+            <stop offset="0.48" stop-color="#78f6c1" />
+            <stop offset="1" stop-color="#66d7ff" />
+          </linearGradient>
+        </defs>
+        <g class="boot-tile">
+          <rect
+            x="4"
+            y="4"
+            width="56"
+            height="56"
+            rx="18"
+            fill="url(#boot-surface)"
+          />
+          <rect
+            x="5"
+            y="5"
+            width="54"
+            height="54"
+            rx="17"
+            stroke="white"
+            stroke-opacity="0.62"
+            stroke-width="2"
+          />
+        </g>
+        <path
+          class="boot-document"
+          d="M17 22.5C17 19.462 19.462 17 22.5 17H39L47 25V41.5C47 44.538 44.538 47 41.5 47H25L17 39V22.5Z"
+          fill="#07130e"
+          fill-opacity="0.94"
+        />
+        <path
+          class="boot-fold"
+          d="M39 17V23C39 24.105 39.895 25 41 25H47"
+          stroke="#a9ffd9"
+          stroke-opacity="0.75"
+          stroke-width="1.5"
+        />
+        <path
+          class="boot-command"
+          d="M26 32H39M35 27.5L39.5 32L35 36.5"
+          stroke="#a9ffd9"
+          stroke-width="3.25"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+    <div class="boot-copy">
+      <strong>AJ Mock Hub</strong>
+      <span>Loading workspace<i></i><i></i><i></i></span>
+    </div>
+  </div>
+</section>

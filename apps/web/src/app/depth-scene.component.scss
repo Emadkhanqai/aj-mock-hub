@@ -1,0 +1,150 @@
+:host {
+  position: fixed;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  inset: 0;
+}
+
+.ambient,
+.depth-halo,
+.depth-prism,
+.grid-plane {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.ambient {
+  width: 34rem;
+  height: 34rem;
+  border-radius: 50%;
+  opacity: 0.24;
+  filter: blur(90px);
+  animation: ambient-drift 14s ease-in-out infinite alternate;
+  will-change: translate, transform;
+}
+
+.ambient-one {
+  top: -16rem;
+  right: -8rem;
+  background: #b6ff42;
+}
+
+.ambient-two {
+  bottom: -20rem;
+  left: -15rem;
+  background: #755cff;
+  animation-delay: -7s;
+}
+
+.depth-halo {
+  top: 12%;
+  left: 34%;
+  width: 34rem;
+  height: 34rem;
+  background: conic-gradient(
+    from 45deg,
+    rgba(120, 246, 193, 0.12),
+    transparent 28%,
+    rgba(152, 133, 255, 0.12),
+    transparent 68%,
+    rgba(199, 255, 98, 0.09)
+  );
+  border-radius: 38%;
+  filter: blur(72px);
+  opacity: 0.38;
+}
+
+.depth-prism {
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 46%),
+    rgba(120, 246, 193, 0.025);
+  border: 1px solid rgba(195, 255, 225, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 30px 80px rgba(0, 0, 0, 0.14);
+  opacity: 0.55;
+  backdrop-filter: blur(12px);
+}
+
+.depth-prism::after {
+  position: absolute;
+  width: 70%;
+  height: 150%;
+  content: '';
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(199, 255, 98, 0.11),
+    transparent
+  );
+  transform: translateX(-120%) rotate(18deg);
+  animation: prism-shimmer 8s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+}
+
+.depth-prism-one {
+  top: 26%;
+  right: -3.5rem;
+  width: 9rem;
+  height: 13rem;
+  border-radius: 32px 72px 28px 64px;
+  transform: rotate(12deg);
+}
+
+.depth-prism-two {
+  bottom: 8%;
+  left: -4rem;
+  width: 8rem;
+  height: 10rem;
+  border-color: rgba(152, 133, 255, 0.14);
+  border-radius: 68px 24px 60px 30px;
+  transform: rotate(-18deg);
+}
+
+.grid-plane {
+  right: -4vw;
+  bottom: -28rem;
+  width: 92vw;
+  height: 55rem;
+  opacity: 0.15;
+  background-image:
+    linear-gradient(rgba(120, 246, 193, 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 246, 193, 0.6) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to top, black, transparent 82%);
+  transform: perspective(620px) rotateX(58deg) rotateZ(-8deg);
+  transform-origin: bottom;
+}
+
+@keyframes prism-shimmer {
+  0%,
+  58% {
+    transform: translateX(-120%) rotate(18deg);
+  }
+  78%,
+  100% {
+    transform: translateX(240%) rotate(18deg);
+  }
+}
+
+@keyframes ambient-drift {
+  to {
+    opacity: 0.34;
+    transform: translate3d(3rem, 2rem, 0) scale(1.08);
+  }
+}
+
+@media (max-width: 700px) {
+  .depth-prism {
+    opacity: 0.34;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient,
+  .depth-prism::after {
+    animation: none;
+  }
+}
