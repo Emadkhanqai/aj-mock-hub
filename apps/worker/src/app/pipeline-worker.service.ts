@@ -8,11 +8,13 @@ import { PrismaService } from '@aj-mock-hub/database';
 import { DockerBuildRunner } from '@aj-mock-hub/build-runner';
 import {
   ISOLATED_BUILD_JOB,
+  ANGULAR_GENERATION_JOB,
   PIPELINE_QUEUE_NAME,
   PipelineQueueData,
   pipelineWorkerOptions,
 } from '@aj-mock-hub/job-queue';
 import { WorkspaceService } from '@aj-mock-hub/storage';
+import { AngularProjectGenerator } from '@aj-mock-hub/generation';
 import { Job, Worker } from 'bullmq';
 
 @Injectable()
@@ -30,6 +32,7 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
   });
   private readonly templateRoot =
     process.env['ANGULAR_TEMPLATE_ROOT'] ?? 'templates/angular-starter';
+  private readonly generator = new AngularProjectGenerator();
   private worker?: Worker<PipelineQueueData>;
   private connection?: ReturnType<typeof pipelineWorkerOptions>['connection'];
 
@@ -56,7 +59,7 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async process(job: Job<PipelineQueueData>): Promise<void> {
-    if (job.name !== ISOLATED_BUILD_JOB) {
+    if (![ISOLATED_BUILD_JOB, ANGULAR_GENERATION_JOB].includes(job.name)) {
       throw new Error('Unsupported pipeline job type');
     }
 
@@ -97,6 +100,25 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
         this.templateRoot,
         workspace.source,
       );
+      if (job.name === ANGULAR_GENERATION_JOB) {
+        const specification = await this.prisma.uiSpecification.findFirst({
+          where: {
+            projectId: job.data.projectId,
+            projectVersionId: job.data.projectVersionId,
+            status: 'APPROVED',
+          },
+        });
+        if (!specification) {
+          throw new Error('Approved UI specification is required');
+        }
+        const files = this.generator.generate(specification.content as never);
+        await this.workspace.writeControlledFiles(workspace.source, files);
+        await this.appendLog(
+          record.id,
+          'INFO',
+          `Generated ${files.length} controlled Angular project files.`,
+        );
+      }
       for (const command of ['lint', 'test', 'build'] as const) {
         const result = await this.buildRunner.run({
           jobId: record.id,
@@ -127,7 +149,9 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
       await this.appendLog(
         record.id,
         'INFO',
-        'Workspace preparation completed.',
+        job.name === ANGULAR_GENERATION_JOB
+          ? 'Angular generation and isolated validation completed.'
+          : 'Workspace preparation completed.',
       );
     } catch (error: unknown) {
       const finalAttempt = job.attemptsMade + 1 >= record.maxAttempts;
@@ -136,8 +160,14 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
         data: {
           status: finalAttempt ? 'FAILED' : 'RETRYING',
           ...(finalAttempt ? { failedAt: new Date() } : {}),
-          errorCode: 'WORKSPACE_PREPARATION_FAILED',
-          errorMessage: 'Workspace preparation failed.',
+          errorCode:
+            job.name === ANGULAR_GENERATION_JOB
+              ? 'ANGULAR_GENERATION_FAILED'
+              : 'WORKSPACE_PREPARATION_FAILED',
+          errorMessage:
+            job.name === ANGULAR_GENERATION_JOB
+              ? 'Angular generation failed.'
+              : 'Workspace preparation failed.',
         },
       });
       await this.appendLog(

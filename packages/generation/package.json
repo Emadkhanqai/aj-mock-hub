@@ -1,0 +1,16 @@
+{
+  "name": "@aj-mock-hub/generation",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@aj-mock-hub/contracts": "0.0.1",
+    "mammoth": "1.12.0",
+    "openai": "6.48.0",
+    "pdf-parse": "2.4.5",
+    "tslib": "^2.3.0",
+    "zod": "4.4.3"
+  }
+}

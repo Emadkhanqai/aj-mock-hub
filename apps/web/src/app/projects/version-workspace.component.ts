@@ -1,0 +1,432 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import type {
+  ProjectResponse,
+  ProjectVersionResponse,
+  RequirementDocumentResponse,
+  UiSpecificationResponse,
+} from '@aj-mock-hub/contracts';
+import { catchError, forkJoin, of } from 'rxjs';
+import { ProjectsApiService } from '../core/projects-api.service';
+
+@Component({
+  selector: 'app-version-workspace',
+  imports: [ReactiveFormsModule, RouterLink],
+  template: `
+    <a class="back-link" [routerLink]="['/projects', projectId]"
+      >← Project history</a
+    >
+    @if (loading()) {
+      <section class="state">Opening requirements workspace…</section>
+    } @else if (error() || !project() || !version()) {
+      <section class="state error" role="alert">
+        <h1>Version unavailable</h1>
+        <p>The immutable project version could not be loaded.</p>
+      </section>
+    } @else {
+      <header class="workspace-hero">
+        <div>
+          <span class="workspace-kicker"
+            >Version {{ version()!.versionNumber }} ·
+            {{ version()!.status }}</span
+          >
+          <h1>{{ project()!.name }}</h1>
+          <p>{{ version()!.label }}</p>
+        </div>
+        <span
+          class="stage-pill"
+          [class.approved]="specification()?.status === 'APPROVED'"
+        >
+          {{ specification()?.status || 'Requirements' }}
+        </span>
+      </header>
+
+      <div class="workspace-layout">
+        <aside class="requirements-rail">
+          <section class="glass-panel instruction-panel">
+            <span class="panel-index">01</span>
+            <h2>Instruction snapshot</h2>
+            <p>{{ version()!.instructionsSnapshot }}</p>
+          </section>
+
+          <section class="glass-panel document-panel">
+            <div class="panel-title-row">
+              <div>
+                <span class="panel-index">02</span>
+                <h2>Source documents</h2>
+              </div>
+              <span>{{ documents().length }}/10</span>
+            </div>
+            <p class="panel-copy">TXT, Markdown, PDF or DOCX · maximum 10 MB</p>
+            <label class="upload-control">
+              <input
+                type="file"
+                accept=".txt,.md,.pdf,.docx"
+                [disabled]="
+                  uploading() || specification()?.status === 'APPROVED'
+                "
+                (change)="upload($event)"
+              />
+              <span>{{
+                uploading() ? 'Uploading…' : 'Add requirement file'
+              }}</span>
+            </label>
+            @if (documents().length) {
+              <ul class="document-list">
+                @for (document of documents(); track document.id) {
+                  <li>
+                    <span class="file-icon">{{
+                      extension(document.originalName)
+                    }}</span>
+                    <span
+                      ><strong>{{ document.originalName }}</strong
+                      ><small>{{ formatBytes(document.byteSize) }}</small></span
+                    >
+                    <i [class.failed]="document.status === 'FAILED'">{{
+                      document.status
+                    }}</i>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </aside>
+
+        <section class="specification-stage glass-panel">
+          <div class="specification-header">
+            <div>
+              <span class="panel-index">03</span>
+              <h2>UI specification</h2>
+              <p>
+                Review the framework-independent plan before Angular generation.
+              </p>
+            </div>
+            @if (!specification()) {
+              <button
+                class="button"
+                type="button"
+                [disabled]="extracting()"
+                (click)="extract()"
+              >
+                {{ extracting() ? 'Extracting…' : 'Extract requirements' }}
+              </button>
+            }
+          </div>
+
+          @if (actionError()) {
+            <p class="form-error action-error" role="alert">
+              {{ actionError() }}
+            </p>
+          }
+
+          @if (!specification()) {
+            <div class="spec-empty">
+              <span class="spec-orbit" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+              <h3>Ready for structured extraction</h3>
+              <p>
+                Your immutable instructions and source documents will become an
+                editable UI plan.
+              </p>
+            </div>
+          } @else {
+            <div class="spec-summary">
+              <span>{{ specification()!.content.pages.length }} pages</span>
+              <span
+                >{{ specification()!.content.workflows.length }} workflows</span
+              >
+              <span
+                >{{ specification()!.content.openQuestions.length }} open
+                questions</span
+              >
+            </div>
+            <div class="spec-preview">
+              <div class="summary-block">
+                <small>Product summary</small>
+                <p>{{ specification()!.content.productSummary }}</p>
+              </div>
+              <div class="page-plan-grid">
+                @for (page of specification()!.content.pages; track page.id) {
+                  <article>
+                    <span>{{ page.route }}</span>
+                    <h3>{{ page.name }}</h3>
+                    <p>{{ page.purpose }}</p>
+                  </article>
+                }
+              </div>
+            </div>
+
+            @if (specification()!.status === 'DRAFT') {
+              <details class="json-editor" [open]="editing()">
+                <summary (click)="editing.set(!editing())">
+                  Edit complete specification
+                </summary>
+                <p>
+                  Advanced structured editor. Invalid fields will be rejected
+                  safely.
+                </p>
+                <textarea
+                  [formControl]="specificationJson"
+                  rows="20"
+                  spellcheck="false"
+                ></textarea>
+              </details>
+              <div class="spec-actions">
+                <button
+                  class="secondary-button"
+                  type="button"
+                  [disabled]="saving()"
+                  (click)="save()"
+                >
+                  {{ saving() ? 'Saving…' : 'Save corrections' }}
+                </button>
+                <button
+                  class="button"
+                  type="button"
+                  [disabled]="approving()"
+                  (click)="approve()"
+                >
+                  {{ approving() ? 'Approving…' : 'Approve specification' }}
+                </button>
+              </div>
+              <p class="immutability-note">
+                Approval is permanent for this project version.
+              </p>
+            } @else {
+              <div class="approved-banner">
+                <span>✓</span>
+                <div>
+                  <strong>Specification approved</strong>
+                  <p>
+                    This plan is immutable and ready for staged Angular
+                    generation.
+                  </p>
+                </div>
+              </div>
+              <div class="generation-action">
+                <div>
+                  <strong>Generate Angular workspace</strong>
+                  <p>
+                    Controlled files will be linted, tested and built inside the
+                    isolated builder container.
+                  </p>
+                </div>
+                <button
+                  class="button"
+                  type="button"
+                  [disabled]="generating()"
+                  (click)="generate()"
+                >
+                  {{ generating() ? 'Queueing…' : 'Generate Angular app' }}
+                </button>
+              </div>
+              @if (generationStatus()) {
+                <p class="generation-status" role="status">
+                  {{ generationStatus() }}
+                </p>
+              }
+            }
+          }
+        </section>
+      </div>
+    }
+  `,
+})
+export class VersionWorkspaceComponent implements OnInit {
+  private readonly api = inject(ProjectsApiService);
+  private readonly route = inject(ActivatedRoute);
+  readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
+  readonly versionId = this.route.snapshot.paramMap.get('versionId') ?? '';
+  readonly project = signal<ProjectResponse | null>(null);
+  readonly version = signal<ProjectVersionResponse | null>(null);
+  readonly documents = signal<RequirementDocumentResponse[]>([]);
+  readonly specification = signal<UiSpecificationResponse | null>(null);
+  readonly loading = signal(true);
+  readonly error = signal(false);
+  readonly uploading = signal(false);
+  readonly extracting = signal(false);
+  readonly saving = signal(false);
+  readonly approving = signal(false);
+  readonly editing = signal(false);
+  readonly actionError = signal('');
+  readonly generating = signal(false);
+  readonly generationStatus = signal('');
+  readonly specificationJson = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+
+  ngOnInit() {
+    if (!this.projectId || !this.versionId) {
+      this.loading.set(false);
+      this.error.set(true);
+      return;
+    }
+    forkJoin({
+      project: this.api.getProject(this.projectId),
+      version: this.api.getVersion(this.projectId, this.versionId),
+      documents: this.api.listDocuments(this.projectId, this.versionId),
+      specification: this.api
+        .getSpecification(this.projectId, this.versionId)
+        .pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ project, version, documents, specification }) => {
+        this.project.set(project);
+        this.version.set(version);
+        this.documents.set(documents.items);
+        if (specification) this.setSpecification(specification);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
+    });
+  }
+
+  upload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || this.uploading()) return;
+    this.uploading.set(true);
+    this.actionError.set('');
+    this.api.uploadDocument(this.projectId, this.versionId, file).subscribe({
+      next: (document) => {
+        this.documents.update((items) => [...items, document]);
+        this.uploading.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.actionError.set(
+          'The document could not be uploaded. Check its type and size.',
+        );
+        this.uploading.set(false);
+        input.value = '';
+      },
+    });
+  }
+
+  extract() {
+    if (this.extracting()) return;
+    this.extracting.set(true);
+    this.actionError.set('');
+    this.api.extractSpecification(this.projectId, this.versionId).subscribe({
+      next: (specification) => {
+        this.setSpecification(specification);
+        this.extracting.set(false);
+        this.reloadDocuments();
+      },
+      error: () => {
+        this.actionError.set(
+          'Requirements extraction failed. Review the source documents and retry.',
+        );
+        this.extracting.set(false);
+        this.reloadDocuments();
+      },
+    });
+  }
+
+  save() {
+    const current = this.specification();
+    if (!current || this.saving()) return;
+    let content: UiSpecificationResponse['content'];
+    try {
+      content = JSON.parse(this.specificationJson.value);
+    } catch {
+      this.actionError.set('The specification editor contains invalid JSON.');
+      return;
+    }
+    this.saving.set(true);
+    this.actionError.set('');
+    this.api
+      .updateSpecification(this.projectId, this.versionId, {
+        expectedUpdatedAt: current.updatedAt,
+        content,
+      })
+      .subscribe({
+        next: (specification) => {
+          this.setSpecification(specification);
+          this.saving.set(false);
+        },
+        error: () => {
+          this.actionError.set(
+            'Corrections were not saved. Refresh if the specification changed elsewhere.',
+          );
+          this.saving.set(false);
+        },
+      });
+  }
+
+  approve() {
+    const current = this.specification();
+    if (!current || this.approving()) return;
+    this.approving.set(true);
+    this.actionError.set('');
+    this.api
+      .approveSpecification(this.projectId, this.versionId, current.updatedAt)
+      .subscribe({
+        next: (specification) => {
+          this.setSpecification(specification);
+          this.approving.set(false);
+        },
+        error: () => {
+          this.actionError.set(
+            'The specification could not be approved. Save or refresh it first.',
+          );
+          this.approving.set(false);
+        },
+      });
+  }
+
+  generate() {
+    const specification = this.specification();
+    if (!specification || this.generating()) return;
+    this.generating.set(true);
+    this.actionError.set('');
+    this.api
+      .generateAngularProject(
+        this.projectId,
+        this.versionId,
+        `angular-generation-${specification.id}`,
+      )
+      .subscribe({
+        next: ({ job, reused }) => {
+          this.generationStatus.set(
+            reused
+              ? `Existing generation job: ${job.status}.`
+              : 'Angular generation queued for isolated validation.',
+          );
+          this.generating.set(false);
+        },
+        error: () => {
+          this.actionError.set(
+            'Angular generation could not be queued. Confirm that the worker and Redis are running.',
+          );
+          this.generating.set(false);
+        },
+      });
+  }
+
+  extension(name: string) {
+    return name.split('.').pop()?.slice(0, 4).toUpperCase() || 'FILE';
+  }
+
+  formatBytes(bytes: number) {
+    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  private setSpecification(specification: UiSpecificationResponse) {
+    this.specification.set(specification);
+    this.specificationJson.setValue(
+      JSON.stringify(specification.content, null, 2),
+    );
+  }
+
+  private reloadDocuments() {
+    this.api.listDocuments(this.projectId, this.versionId).subscribe({
+      next: ({ items }) => this.documents.set(items),
+    });
+  }
+}

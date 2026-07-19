@@ -1,6 +1,6 @@
 # AJ Mock Hub
 
-Local-first application for creating, preserving, and reviewing versioned Angular interface briefs. Milestone 2 adds the first real domain: projects and immutable project versions.
+Local-first application for converting written requirements and supporting documents into approved UI specifications and isolated, validated Angular prototype workspaces.
 
 ## Prerequisites
 
@@ -35,6 +35,8 @@ docker build -f docker/angular-builder/Dockerfile -t aj-mock-hub-angular-builder
 ```
 
 The values in `.env.example` are intentionally non-production defaults. Change them in the ignored `.env` file if needed.
+
+Requirements extraction defaults to the deterministic offline provider so local development needs no cloud credentials. To use Azure OpenAI, set `REQUIREMENTS_PROVIDER=azure-openai` and provide the endpoint, key, API version, and deployment name in the ignored `.env` file. Never commit those values.
 
 ## Run the applications
 
@@ -90,6 +92,7 @@ apps/worker              NestJS worker process
 packages/contracts       Shared transport contracts
 packages/configuration   Shared configuration utilities
 packages/storage         Storage abstractions
+packages/generation      Requirement schemas, provider abstraction, and controlled Angular generation
 packages/angular-standards Angular generation standards
 packages/database        Prisma client, schema, migrations, and seed
 packages/job-queue       Shared BullMQ queue names, payloads, and retry policy
@@ -102,8 +105,19 @@ Normal development runs the applications directly on macOS for fast feedback. Po
 
 ## Project API
 
-The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1. Version-scoped job endpoints enqueue workspace preparation, list jobs, return bounded lifecycle logs, and request cancellation.
+The API exposes project creation, listing, and detail plus creation and retrieval of immutable project versions under `/api/projects`. Version numbers are sequential within each project and begin at 1.
+
+For a version, open its requirements workspace in the Angular application. The workflow is:
+
+1. Review the immutable instruction snapshot.
+2. Optionally upload TXT, Markdown, PDF, or DOCX documents, up to 10 MB each and 10 per version.
+3. Extract an editable framework-independent UI specification.
+4. Correct and save the specification.
+5. Approve it permanently.
+6. Queue staged Angular generation. The worker writes only controlled files and validates them in the isolated builder container.
+
+Uploaded binaries and extracted text are stored in MinIO behind the storage abstraction. PostgreSQL stores metadata and the structured specification, not document bodies.
 
 ## Current scope
 
-Milestone 4 does not include AI integration, uploads, MinIO application flows, model-driven file changes, arbitrary command execution, preview publishing, ZIP exports, email sending, authentication, Azure implementation, or GitHub integration.
+Milestone 5 includes requirements documents, structured extraction, specification correction and approval, a provider-neutral Azure OpenAI adapter, and controlled staged Angular generation. It does not include preview publishing, targeted revisions, ZIP exports, email sending, authentication, Azure resource deployment, or GitHub integration.

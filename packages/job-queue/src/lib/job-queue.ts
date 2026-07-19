@@ -4,6 +4,7 @@ import IORedis from 'ioredis';
 export const PIPELINE_QUEUE_NAME =
   process.env['PIPELINE_QUEUE_NAME'] ?? 'aj-mock-hub-pipeline';
 export const ISOLATED_BUILD_JOB = 'isolated-build';
+export const ANGULAR_GENERATION_JOB = 'angular-generation';
 
 export interface PipelineQueueData {
   pipelineJobId: string;

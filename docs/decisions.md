@@ -58,11 +58,29 @@ Input is bind-mounted read-only at `/input` and copied into an ephemeral UID-100
 
 Build output remains ephemeral in Milestone 4. The worker persists bounded exit codes, durations, timeout state, and sanitized output in pipeline logs. Preview/artifact publication is deferred. Controlled template copying rejects symbolic links and excludes dependency, build, cache, and coverage directories.
 
+## Requirements documents and UI specifications
+
+Requirements documents belong to an immutable project version. PostgreSQL stores allowlisted media type, bounded size, lifecycle state, and opaque storage keys; MinIO stores source bytes and bounded extracted text behind the object-storage interface. Uploads allow TXT, Markdown, PDF, and DOCX only, with a 10 MB per-file limit and at most 10 documents per version. Object keys are server-generated and never derived as trusted paths from user filenames.
+
+Each project version has at most one framework-independent UI specification. Drafts use optimistic concurrency through `updatedAt` and remain editable. Approval records an UTC timestamp and is irreversible: both API rules and a PostgreSQL trigger reject updates or deletion after approval. Angular generation requires an approved specification.
+
+## Model provider and structured output
+
+The generation package owns provider-neutral inputs, a strict Zod schema, and the equivalent closed JSON Schema used for Azure OpenAI structured output. The Azure deployment name and API version are environment configuration, requests have a 60-second default timeout and at most two SDK retries, and returned JSON is validated again locally before persistence. No provider credentials enter PostgreSQL, logs, generated workspaces, or the repository.
+
+Local development defaults to a deterministic offline provider so tests and normal contributor setup have no cloud dependency or cost. Selecting `azure-openai` requires explicit credentials in the ignored local environment. This adapter does not provision or deploy Azure resources.
+
+## Controlled staged Angular generation
+
+The approved UI specification is transformed into a fixed allowlist of Angular project files. File paths are chosen by trusted application code, confined beneath the version workspace, and cannot contain traversal segments. User and model text is serialized as data rather than interpreted as a path or command. The worker then invokes only `lint`, `test`, and `build` through the existing disposable, network-disabled builder container; generated source is never executed on the host.
+
+The current stage emits an Angular application shell, responsive page navigation, component placeholders, a test, the approved UI specification, and developer setup documentation. Preview hosting and element-level revisions remain separate milestones.
+
 ## Deferred decisions
 
 Later milestones will decide and implement:
 
-- AI model providers, prompt contracts, and safety policy
+- Additional model providers and model-evaluation policy
 - ZIP handoff format
 - Email delivery, authentication, and authorization
 - Preview hosting and retention

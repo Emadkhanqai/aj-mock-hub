@@ -24,6 +24,7 @@ enum ProjectVersionSourceType {
 enum PipelineJobType {
   WORKSPACE_PREPARATION
   ISOLATED_BUILD
+  ANGULAR_GENERATION
 }
 
 enum PipelineJobStatus {
@@ -42,15 +43,28 @@ enum PipelineJobLogLevel {
   ERROR
 }
 
+enum RequirementDocumentStatus {
+  UPLOADED
+  EXTRACTED
+  FAILED
+}
+
+enum UiSpecificationStatus {
+  DRAFT
+  APPROVED
+}
+
 model Project {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String        @db.VarChar(120)
-  description String?       @db.VarChar(2000)
-  status      ProjectStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now()) @db.Timestamptz(3) @map("created_at")
-  updatedAt   DateTime      @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
-  versions    ProjectVersion[]
-  jobs        PipelineJob[]
+  id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String                @db.VarChar(120)
+  description    String?               @db.VarChar(2000)
+  status         ProjectStatus         @default(ACTIVE)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  versions       ProjectVersion[]
+  jobs           PipelineJob[]
+  documents      RequirementDocument[]
+  specifications UiSpecification[]
 
   @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
   @@map("projects")
@@ -58,38 +72,76 @@ model Project {
 
 model ProjectVersion {
   id                   String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId            String                   @db.Uuid @map("project_id")
+  projectId            String                   @map("project_id") @db.Uuid
   versionNumber        Int                      @map("version_number")
   label                String                   @db.VarChar(120)
   status               ProjectVersionStatus     @default(DRAFT)
   sourceType           ProjectVersionSourceType @default(MANUAL) @map("source_type")
-  instructionsSnapshot String                   @db.Text @map("instructions_snapshot")
-  createdAt            DateTime                 @default(now()) @db.Timestamptz(3) @map("created_at")
+  instructionsSnapshot String                   @map("instructions_snapshot") @db.Text
+  createdAt            DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
   project              Project                  @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   jobs                 PipelineJob[]
+  documents            RequirementDocument[]
+  specification        UiSpecification?
 
   @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
   @@map("project_versions")
 }
 
+model RequirementDocument {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId        String                    @map("project_id") @db.Uuid
+  projectVersionId String                    @map("project_version_id") @db.Uuid
+  originalName     String                    @map("original_name") @db.VarChar(255)
+  mediaType        String                    @map("media_type") @db.VarChar(100)
+  byteSize         Int                       @map("byte_size")
+  storageKey       String                    @unique(map: "requirement_documents_storage_key_key") @map("storage_key") @db.VarChar(500)
+  extractedTextKey String?                   @map("extracted_text_key") @db.VarChar(500)
+  status           RequirementDocumentStatus @default(UPLOADED)
+  errorMessage     String?                   @map("error_message") @db.VarChar(500)
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  project          Project                   @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  projectVersion   ProjectVersion            @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([projectVersionId, createdAt], map: "requirement_documents_version_created_at_idx")
+  @@map("requirement_documents")
+}
+
+model UiSpecification {
+  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId        String                @map("project_id") @db.Uuid
+  projectVersionId String                @unique(map: "ui_specifications_project_version_id_key") @map("project_version_id") @db.Uuid
+  status           UiSpecificationStatus @default(DRAFT)
+  content          Json                  @db.JsonB
+  approvedAt       DateTime?             @map("approved_at") @db.Timestamptz(3)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  project          Project               @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  projectVersion   ProjectVersion        @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc)], map: "ui_specifications_project_created_at_idx")
+  @@map("ui_specifications")
+}
+
 model PipelineJob {
   id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId               String            @db.Uuid @map("project_id")
-  projectVersionId        String            @db.Uuid @map("project_version_id")
-  type                    PipelineJobType    @default(WORKSPACE_PREPARATION)
+  projectId               String            @map("project_id") @db.Uuid
+  projectVersionId        String            @map("project_version_id") @db.Uuid
+  type                    PipelineJobType   @default(WORKSPACE_PREPARATION)
   status                  PipelineJobStatus @default(QUEUED)
-  idempotencyKey          String            @db.VarChar(120) @map("idempotency_key")
+  idempotencyKey          String            @map("idempotency_key") @db.VarChar(120)
   attempts                Int               @default(0)
   maxAttempts             Int               @default(3) @map("max_attempts")
-  cancellationRequestedAt DateTime?         @db.Timestamptz(3) @map("cancellation_requested_at")
-  cancelledAt             DateTime?         @db.Timestamptz(3) @map("cancelled_at")
-  startedAt               DateTime?         @db.Timestamptz(3) @map("started_at")
-  completedAt             DateTime?         @db.Timestamptz(3) @map("completed_at")
-  failedAt                DateTime?         @db.Timestamptz(3) @map("failed_at")
-  errorCode               String?           @db.VarChar(80) @map("error_code")
-  errorMessage            String?           @db.VarChar(500) @map("error_message")
-  createdAt               DateTime          @default(now()) @db.Timestamptz(3) @map("created_at")
-  updatedAt               DateTime          @default(now()) @updatedAt @db.Timestamptz(3) @map("updated_at")
+  cancellationRequestedAt DateTime?         @map("cancellation_requested_at") @db.Timestamptz(3)
+  cancelledAt             DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  startedAt               DateTime?         @map("started_at") @db.Timestamptz(3)
+  completedAt             DateTime?         @map("completed_at") @db.Timestamptz(3)
+  failedAt                DateTime?         @map("failed_at") @db.Timestamptz(3)
+  errorCode               String?           @map("error_code") @db.VarChar(80)
+  errorMessage            String?           @map("error_message") @db.VarChar(500)
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt               DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   project                 Project           @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   projectVersion          ProjectVersion    @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   logs                    PipelineJobLog[]
@@ -102,11 +154,11 @@ model PipelineJob {
 
 model PipelineJobLog {
   id        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  jobId     String              @db.Uuid @map("job_id")
+  jobId     String              @map("job_id") @db.Uuid
   sequence  Int
   level     PipelineJobLogLevel
   message   String              @db.VarChar(1000)
-  createdAt DateTime            @default(now()) @db.Timestamptz(3) @map("created_at")
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
   job       PipelineJob         @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([jobId, sequence], map: "pipeline_job_logs_job_sequence_key")

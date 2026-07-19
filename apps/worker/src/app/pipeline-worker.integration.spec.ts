@@ -1,9 +1,10 @@
-import { stat } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PrismaService } from '@aj-mock-hub/database';
 import {
   PIPELINE_JOB_OPTIONS,
   ISOLATED_BUILD_JOB,
+  ANGULAR_GENERATION_JOB,
   createPipelineQueue,
 } from '@aj-mock-hub/job-queue';
 import { PipelineWorkerService } from './pipeline-worker.service';
@@ -137,6 +138,99 @@ describe('Pipeline worker integration', () => {
     expect(cancelled.logs[cancelled.logs.length - 1]?.message).toBe(
       'Active job cancelled cooperatively.',
     );
+  });
+
+  it('generates controlled Angular files from an approved specification', async () => {
+    const project = await prisma.project.create({
+      data: { name: 'Generated worker integration' },
+    });
+    const version = await prisma.projectVersion.create({
+      data: {
+        projectId: project.id,
+        versionNumber: 1,
+        label: 'Approved plan',
+        instructionsSnapshot: 'Create a service dashboard.',
+      },
+    });
+    await prisma.uiSpecification.create({
+      data: {
+        projectId: project.id,
+        projectVersionId: version.id,
+        status: 'APPROVED',
+        approvedAt: new Date(),
+        content: {
+          productSummary: 'Synthetic service dashboard',
+          audiences: ['Service agents'],
+          roles: ['Agent'],
+          pages: [
+            {
+              id: 'dashboard',
+              name: 'Dashboard',
+              route: '/',
+              purpose: 'Summarize service demand.',
+              components: ['Service overview', 'Request queue'],
+              dataNeeds: ['Synthetic requests'],
+            },
+          ],
+          workflows: [],
+          navigation: {
+            pattern: 'SIDEBAR',
+            items: [{ label: 'Dashboard', route: '/' }],
+          },
+          branding: {
+            tone: 'Professional',
+            primaryColor: null,
+            accessibilityNotes: ['Visible focus states'],
+          },
+          assumptions: [],
+          openQuestions: [],
+        },
+      },
+    });
+    const pipelineJob = await prisma.pipelineJob.create({
+      data: {
+        projectId: project.id,
+        projectVersionId: version.id,
+        type: 'ANGULAR_GENERATION',
+        idempotencyKey: 'generation-integration',
+        logs: {
+          create: {
+            sequence: 1,
+            level: 'INFO',
+            message: 'Angular generation job queued.',
+          },
+        },
+      },
+    });
+
+    await queueResources.queue.add(
+      ANGULAR_GENERATION_JOB,
+      {
+        pipelineJobId: pipelineJob.id,
+        projectId: project.id,
+        projectVersionId: version.id,
+        versionNumber: 1,
+      },
+      { ...PIPELINE_JOB_OPTIONS, jobId: pipelineJob.id },
+    );
+
+    const completed = await waitForTerminalState(pipelineJob.id);
+    expect(completed.status).toBe('COMPLETED');
+    expect(completed.logs.map(({ message }) => message)).toEqual(
+      expect.arrayContaining([
+        'Generated 5 controlled Angular project files.',
+        'Angular generation and isolated validation completed.',
+      ]),
+    );
+    const workspaceRoot = process.env['WORKSPACE_ROOT'];
+    if (!workspaceRoot) throw new Error('WORKSPACE_ROOT is required');
+    const source = join(workspaceRoot, project.id, 'versions', '001', 'source');
+    await expect(
+      readFile(join(source, 'src', 'main.ts'), 'utf8'),
+    ).resolves.toContain('Synthetic service dashboard');
+    await expect(
+      readFile(join(source, 'ui-specification.json'), 'utf8'),
+    ).resolves.toContain('"dashboard"');
   });
 
   async function waitForTerminalState(jobId: string) {

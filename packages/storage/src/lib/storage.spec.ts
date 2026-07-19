@@ -29,4 +29,21 @@ describe('WorkspaceService', () => {
       readFile(join(workspace.source, 'package.json'), 'utf8'),
     ).resolves.toBe('{"private":true}');
   });
+
+  it('writes only relative controlled files beneath a prepared workspace', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'aj-mock-hub-workspace-'));
+    const service = new WorkspaceService(root);
+    const workspace = await service.prepare('project-id', 1);
+    await service.writeControlledFiles(workspace.source, [
+      { path: 'src/generated.ts', content: 'export const ready = true;' },
+    ]);
+    await expect(
+      readFile(join(workspace.source, 'src/generated.ts'), 'utf8'),
+    ).resolves.toContain('ready = true');
+    await expect(
+      service.writeControlledFiles(workspace.source, [
+        { path: '../escape.ts', content: '' },
+      ]),
+    ).rejects.toThrow('invalid');
+  });
 });

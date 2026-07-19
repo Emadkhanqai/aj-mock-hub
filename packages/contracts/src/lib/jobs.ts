@@ -1,4 +1,7 @@
-export type PipelineJobType = 'WORKSPACE_PREPARATION' | 'ISOLATED_BUILD';
+export type PipelineJobType =
+  | 'WORKSPACE_PREPARATION'
+  | 'ISOLATED_BUILD'
+  | 'ANGULAR_GENERATION';
 export type PipelineJobStatus =
   | 'QUEUED'
   | 'ACTIVE'
