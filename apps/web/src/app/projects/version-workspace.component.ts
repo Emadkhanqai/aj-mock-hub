@@ -211,20 +211,14 @@ export function formatPipelineLog(message: string) {
               <div class="approved-banner">
                 <span>✓</span>
                 <div>
-                  <strong>Specification approved</strong>
-                  <p>
-                    This plan is immutable and ready for staged Angular
-                    generation.
-                  </p>
+                  <strong>Design plan ready</strong>
+                  <p>This version is saved and ready to turn into an app.</p>
                 </div>
               </div>
               <div class="generation-action">
                 <div>
-                  <strong>Generate Angular workspace</strong>
-                  <p>
-                    Controlled files will be linted, tested and built inside the
-                    isolated builder container.
-                  </p>
+                  <strong>Build your app</strong>
+                  <p>We’ll create your Angular app and check that it works.</p>
                 </div>
                 @if (!preview()) {
                   <button
@@ -233,7 +227,7 @@ export function formatPipelineLog(message: string) {
                     [disabled]="generating()"
                     (click)="generate()"
                   >
-                    {{ generating() ? 'Queueing…' : 'Generate Angular app' }}
+                    {{ generating() ? 'Starting…' : 'Build app' }}
                   </button>
                 } @else {
                   <a
@@ -259,7 +253,7 @@ export function formatPipelineLog(message: string) {
                       >
                         <i></i>{{ generationJob()!.status }}
                       </span>
-                      <h3>Generation activity</h3>
+                      <h3>Build progress</h3>
                     </div>
                     @if (canCancelGeneration()) {
                       <button
@@ -267,13 +261,13 @@ export function formatPipelineLog(message: string) {
                         [disabled]="cancelling()"
                         (click)="cancelGeneration()"
                       >
-                        {{ cancelling() ? 'Cancelling…' : 'Cancel job' }}
+                        {{ cancelling() ? 'Stopping…' : 'Stop build' }}
                       </button>
                     }
                   </header>
                   <div class="console-metrics">
                     <span
-                      ><small>Attempt</small
+                      ><small>Try</small
                       ><strong
                         >{{ generationJob()!.attempts }}/{{
                           generationJob()!.maxAttempts
@@ -281,11 +275,10 @@ export function formatPipelineLog(message: string) {
                       ></span
                     >
                     <span
-                      ><small>Type</small
-                      ><strong>Angular generation</strong></span
+                      ><small>Task</small><strong>Creating app</strong></span
                     >
                     <span
-                      ><small>Updated</small
+                      ><small>Last update</small
                       ><strong>{{
                         generationJob()!.updatedAt | date: 'mediumTime'
                       }}</strong></span
@@ -302,7 +295,7 @@ export function formatPipelineLog(message: string) {
                       </li>
                     } @empty {
                       <li class="console-empty">
-                        <p>Waiting for the first worker update…</p>
+                        <p>Waiting for the build to start…</p>
                       </li>
                     }
                   </ol>
@@ -655,8 +648,8 @@ export class VersionWorkspaceComponent implements OnInit {
         next: ({ job, reused }) => {
           this.generationStatus.set(
             reused
-              ? `Existing generation job: ${job.status}.`
-              : 'Angular generation queued for isolated validation.',
+              ? `Current build status: ${job.status}.`
+              : 'Your app build has started.',
           );
           this.generating.set(false);
           this.loadGenerationJob(job.id);
