@@ -103,12 +103,16 @@ Delivered:
 
 ## Milestone 7 — Developer handoff
 
-- ZIP packaging.
-- Exclusion validation.
-- Artifact storage.
-- Signed download links.
-- Email sharing.
-- Download audit trail.
+Status: completed.
+
+Delivered:
+
+- Deterministic clean ZIP packaging from validated immutable version source.
+- Strict exclusion and size validation for dependencies, build output, caches, local environments, logs, keys, and symlinks.
+- Immutable ZIP artifact metadata and private object storage in MinIO.
+- HMAC-signed expiring application download links without exposing object keys or storage credentials.
+- SMTP email sharing through Mailpit-compatible configuration.
+- Persistent download audit records.
 
 ## Milestone 8 — Demonstration and hardening
 

@@ -5,6 +5,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { RequirementsModule } from './requirements/requirements.module';
 import { PreviewsModule } from './previews/previews.module';
 import { RevisionsModule } from './revisions/revisions.module';
+import { ExportsModule } from './exports/exports.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { RevisionsModule } from './revisions/revisions.module';
     RequirementsModule,
     PreviewsModule,
     RevisionsModule,
+    ExportsModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -5,3 +5,4 @@ export * from './lib/jobs';
 export * from './lib/requirements';
 export * from './lib/previews';
 export * from './lib/revisions';
+export * from './lib/exports';

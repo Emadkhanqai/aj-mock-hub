@@ -8,6 +8,7 @@ import type {
   RequirementDocumentResponse,
   StaticPreviewResponse,
   UiSpecificationResponse,
+  DeveloperExportResponse,
 } from '@aj-mock-hub/contracts';
 import { catchError, forkJoin, of, switchMap, takeWhile, timer } from 'rxjs';
 import { ProjectsApiService } from '../core/projects-api.service';
@@ -236,6 +237,59 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   ]"
                   >Open validated preview →</a
                 >
+                <section class="export-panel">
+                  <div class="export-heading">
+                    <div>
+                      <strong>Developer handoff</strong>
+                      <p>
+                        Package clean Angular source or share an expiring link.
+                      </p>
+                    </div>
+                    <button
+                      class="secondary-button"
+                      type="button"
+                      [disabled]="exporting()"
+                      (click)="createExport()"
+                    >
+                      {{ exporting() ? 'Packaging…' : 'Create clean ZIP' }}
+                    </button>
+                  </div>
+                  @if (exports().length) {
+                    <div class="export-list">
+                      @for (artifact of exports(); track artifact.id) {
+                        <article>
+                          <a [href]="artifact.downloadUrl">{{
+                            artifact.fileName
+                          }}</a>
+                          <small
+                            >{{ formatBytes(artifact.byteSize) }} ·
+                            {{ artifact.fileCount }} files ·
+                            {{ artifact.downloadCount }} downloads</small
+                          >
+                          <div class="share-row">
+                            <input
+                              type="email"
+                              [formControl]="shareEmail"
+                              placeholder="developer@example.com"
+                            />
+                            <button
+                              type="button"
+                              [disabled]="sharing() || shareEmail.invalid"
+                              (click)="share(artifact)"
+                            >
+                              Share link
+                            </button>
+                          </div>
+                        </article>
+                      }
+                    </div>
+                  }
+                  @if (shareStatus()) {
+                    <p class="generation-status" role="status">
+                      {{ shareStatus() }}
+                    </p>
+                  }
+                </section>
               }
               @if (generationStatus()) {
                 <p class="generation-status" role="status">
@@ -270,6 +324,14 @@ export class VersionWorkspaceComponent implements OnInit {
   readonly generating = signal(false);
   readonly generationStatus = signal('');
   readonly preview = signal<StaticPreviewResponse | null>(null);
+  readonly exports = signal<DeveloperExportResponse[]>([]);
+  readonly exporting = signal(false);
+  readonly sharing = signal(false);
+  readonly shareStatus = signal('');
+  readonly shareEmail = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.email],
+  });
   readonly specificationJson = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required],
@@ -291,13 +353,24 @@ export class VersionWorkspaceComponent implements OnInit {
       preview: this.api
         .getPreview(this.projectId, this.versionId)
         .pipe(catchError(() => of(null))),
+      exports: this.api
+        .listExports(this.projectId, this.versionId)
+        .pipe(catchError(() => of({ items: [] }))),
     }).subscribe({
-      next: ({ project, version, documents, specification, preview }) => {
+      next: ({
+        project,
+        version,
+        documents,
+        specification,
+        preview,
+        exports,
+      }) => {
         this.project.set(project);
         this.version.set(version);
         this.documents.set(documents.items);
         if (specification) this.setSpecification(specification);
         this.preview.set(preview);
+        this.exports.set(exports.items);
         this.loading.set(false);
       },
       error: () => {
@@ -437,6 +510,43 @@ export class VersionWorkspaceComponent implements OnInit {
 
   extension(name: string) {
     return name.split('.').pop()?.slice(0, 4).toUpperCase() || 'FILE';
+  }
+
+  createExport() {
+    if (this.exporting()) return;
+    this.exporting.set(true);
+    this.actionError.set('');
+    this.api.createExport(this.projectId, this.versionId).subscribe({
+      next: (artifact) => {
+        this.exports.update((items) => [artifact, ...items]);
+        this.exporting.set(false);
+        this.shareStatus.set('Clean developer ZIP is ready.');
+      },
+      error: () => {
+        this.exporting.set(false);
+        this.actionError.set('The developer handoff could not be packaged.');
+      },
+    });
+  }
+
+  share(artifact: DeveloperExportResponse) {
+    if (this.sharing() || this.shareEmail.invalid) return;
+    this.sharing.set(true);
+    this.shareStatus.set('');
+    this.api
+      .shareExport(this.projectId, artifact.id, this.shareEmail.value)
+      .subscribe({
+        next: ({ recipient }) => {
+          this.sharing.set(false);
+          this.shareStatus.set(`Expiring download link sent to ${recipient}.`);
+        },
+        error: () => {
+          this.sharing.set(false);
+          this.actionError.set(
+            'The handoff email could not be sent. Confirm Mailpit is running.',
+          );
+        },
+      });
   }
 
   formatBytes(bytes: number) {

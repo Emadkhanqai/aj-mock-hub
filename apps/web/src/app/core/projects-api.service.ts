@@ -19,6 +19,9 @@ import {
   PipelineJobDetailResponse,
   UiSpecificationResponse,
   UpdateUiSpecificationRequest,
+  DeveloperExportListResponse,
+  DeveloperExportResponse,
+  ShareDeveloperExportResponse,
 } from '@aj-mock-hub/contracts';
 
 @Injectable({ providedIn: 'root' })
@@ -183,6 +186,26 @@ export class ProjectsApiService {
   compareVersions(projectId: string, leftId: string, rightId: string) {
     return this.http.get<ProjectVersionComparisonResponse>(
       `/api/projects/${projectId}/versions/${leftId}/compare/${rightId}`,
+    );
+  }
+
+  listExports(projectId: string, versionId: string) {
+    return this.http.get<DeveloperExportListResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/exports`,
+    );
+  }
+
+  createExport(projectId: string, versionId: string) {
+    return this.http.post<DeveloperExportResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/exports`,
+      {},
+    );
+  }
+
+  shareExport(projectId: string, exportId: string, email: string) {
+    return this.http.post<ShareDeveloperExportResponse>(
+      `/api/projects/${projectId}/exports/${exportId}/share`,
+      { email },
     );
   }
 }

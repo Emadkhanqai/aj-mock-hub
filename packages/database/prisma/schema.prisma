@@ -79,6 +79,7 @@ model Project {
   specifications UiSpecification[]
   previews       StaticPreview[]
   revisions      DraftRevision[]
+  exports        DeveloperExport[]
 
   @@index([createdAt(sort: Desc)], map: "projects_created_at_idx")
   @@map("projects")
@@ -100,9 +101,39 @@ model ProjectVersion {
   preview              StaticPreview?
   baseRevisions         DraftRevision[] @relation("RevisionBaseVersion")
   acceptedRevision      DraftRevision?  @relation("RevisionAcceptedVersion")
+  exports               DeveloperExport[]
 
   @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
   @@map("project_versions")
+}
+
+model DeveloperExport {
+  id               String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId        String                @map("project_id") @db.Uuid
+  projectVersionId String                @map("project_version_id") @db.Uuid
+  storageKey       String                @unique(map: "developer_exports_storage_key_key") @map("storage_key") @db.VarChar(500)
+  fileName         String                @map("file_name") @db.VarChar(180)
+  contentHash      String                @map("content_hash") @db.Char(64)
+  byteSize         Int                   @map("byte_size")
+  fileCount        Int                   @map("file_count")
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  project          Project               @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  projectVersion   ProjectVersion        @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  downloads        ExportDownloadAudit[]
+
+  @@index([projectId, createdAt(sort: Desc)], map: "developer_exports_project_created_at_idx")
+  @@index([projectVersionId, createdAt(sort: Desc)], map: "developer_exports_version_created_at_idx")
+  @@map("developer_exports")
+}
+
+model ExportDownloadAudit {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exportId   String          @map("export_id") @db.Uuid
+  downloadedAt DateTime      @default(now()) @map("downloaded_at") @db.Timestamptz(3)
+  export     DeveloperExport @relation(fields: [exportId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([exportId, downloadedAt(sort: Desc)], map: "export_download_audits_export_downloaded_at_idx")
+  @@map("export_download_audits")
 }
 
 model RequirementDocument {

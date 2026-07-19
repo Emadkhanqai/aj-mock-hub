@@ -120,11 +120,12 @@ For a version, open its requirements workspace in the Angular application. The w
 6. Queue staged Angular generation. The worker writes only controlled files and validates them in the isolated builder container.
 7. Open the validated static preview in desktop, tablet, or mobile mode.
 8. Select a generated component, create a controlled draft revision, compare it with the accepted preview, then accept it as a new immutable version or discard it.
+9. Create a clean developer ZIP, download it through an expiring signed link, or email the link through local Mailpit.
 
-Validated preview files are stored in the `previews` MinIO bucket. The management app renders them in an opaque sandbox; generated code cannot access AJ Mock Hub state or make network requests. Version history supports comparison, duplication, and restoration by creating new versions rather than overwriting existing ones.
+Validated preview files are stored in the `previews` MinIO bucket. The management app renders them in an opaque sandbox; generated code cannot access AJ Mock Hub state or make network requests. Version history supports comparison, duplication, and restoration by creating new versions rather than overwriting existing ones. Developer handoffs are stored separately in the `exports` bucket, exclude local/generated/private content, and are delivered only through expiring AJ Mock Hub links with download auditing.
 
 Uploaded binaries and extracted text are stored in MinIO behind the storage abstraction. PostgreSQL stores metadata and the structured specification, not document bodies.
 
 ## Current scope
 
-Milestone 6 includes requirements-to-generation from Milestone 5 plus validated static previews, responsive preview modes, stable element selection, controlled component-label revisions, draft accept/discard, and compare/restore/duplicate version flows. ZIP exports, email sending, authentication, preview sharing, retention cleanup, Azure resource deployment, and GitHub integration remain deferred.
+Milestone 7 includes the complete requirements-to-preview flow plus clean ZIP exports, signed downloads, Mailpit-compatible email sharing, and download auditing. Authentication, public preview sharing, retention cleanup, Azure resource deployment, and GitHub integration remain deferred.

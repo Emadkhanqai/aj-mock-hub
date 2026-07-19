@@ -86,6 +86,12 @@ The management application embeds generated previews in a script-enabled sandbox
 
 Targeted changes are temporary `DraftRevision` records and never mutate their base version. The first controlled revision operation replaces one selected component label in the approved UI specification, regenerates only the trusted file set, and repeats isolated lint, test, and build. A ready draft may be discarded or accepted. Acceptance creates a sequential new immutable `ProjectVersion`, approved specification, source workspace, and static preview reference. Duplicate and restore also create new versions, and comparison is metadata/specification based.
 
+## Developer handoff artifacts
+
+Developer ZIPs are assembled only from an already validated immutable version workspace. Packaging is a read-only operation: it rejects symlinks and unsafe paths, enforces file and byte limits, excludes dependencies, build output, caches, local environments, logs, common key files, uploads, previews, and internal artifacts, and injects sanitized setup and design-system documentation. The ZIP itself is never committed and is stored in a dedicated private MinIO bucket behind the storage abstraction. Its metadata is immutable in PostgreSQL.
+
+Download links are short-lived HMAC-signed AJ Mock Hub API URLs. They do not reveal MinIO keys or credentials, invalid and expired signatures return the same not-found response, and each successful download creates an append-only audit record. Anyone possessing a valid link can download until expiry; authentication and per-user authorization remain deferred. Email sharing uses a provider-neutral SMTP boundary, with Mailpit as the local target and a future approved Azure-compatible provider replacing it without changing export behavior.
+
 ## Deferred decisions
 
 Later milestones will decide and implement:
