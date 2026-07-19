@@ -2,12 +2,12 @@
 
 ## Daily limits
 
-| Loop               | Max runs/day | Max tokens/day | Max sub-agent spawns/run | Max draft PRs/day |
-| ------------------ | ------------ | -------------- | ------------------------ | ----------------- |
-| Daily Triage       | 2            | 100k           | 0                        | 0                 |
-| PR Babysitter      | 12           | 200k           | 2                        | 2                 |
-| CI Sweeper         | 8            | 200k           | 2                        | 2                 |
-| Dependency Sweeper | 2            | 120k           | 2                        | 2                 |
+| Loop               | Max runs/day | Max tokens/day | Max sub-agent spawns/run | Max direct commits/day |
+| ------------------ | ------------ | -------------- | ------------------------ | ---------------------- |
+| Daily Triage       | 2            | 100k           | 0                        | 0                      |
+| PR Babysitter      | 144          | 2M             | 2                        | 4                      |
+| CI Sweeper         | 96           | 1M             | 2                        | 4                      |
+| Dependency Sweeper | 4            | 500k           | 2                        | 2                      |
 
 ## On budget exceed
 

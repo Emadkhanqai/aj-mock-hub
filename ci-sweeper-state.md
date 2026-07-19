@@ -2,7 +2,7 @@
 
 Last run: 2026-07-19 (manual supervised Codex L2 verification)
 
-Scope: application, API, worker, database, migrations, generation, storage, Angular frontend, tests, and repository CI configuration.
+Scope: direct verified fixes on `main` across application, API, worker, database, migrations, generation, storage, Angular frontend, tests, and repository CI configuration.
 
 ## Active Failures
 

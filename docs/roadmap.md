@@ -77,7 +77,7 @@ Status: completed.
 
 ## Milestone 5 — Requirements and generation
 
-Status: implementation complete; supervisor review pending.
+Status: completed.
 
 - Written instructions.
 - Document upload.
@@ -126,5 +126,5 @@ Every milestone must preserve:
 - No execution of generated code on the host.
 - No secrets, customer data, or generated customer applications in the public repository.
 - Infrastructure access through abstractions.
-- Quality-gate evidence before review.
-- Supervisor approval before merge.
+- Quality-gate evidence before every direct commit and push.
+- Cohesive, non-force commits directly on `main` under the standing no-PR delivery policy.

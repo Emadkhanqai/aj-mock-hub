@@ -14,7 +14,7 @@ Checklist (all applicable items must pass):
 5. Database — inspect Prisma and SQL changes; reject destructive or unapproved migrations, db push substitutes, unsafe seeds, or migration-history rewrites.
 6. Security — reject secrets, local environment files, customer data, generated workspaces, build artifacts, weakened validation, unsafe container access, or exposed internal errors.
 7. No cheating — no disabled tests, skipped assertions, reduced coverage, force-push, or bypassed gates.
-8. Delivery — dedicated branch/worktree, concise commit, complete draft PR evidence, and no merge without supervisor approval.
+8. Delivery — clean synchronized main, concise direct commit, complete handoff evidence, no pull request, and no force-push.
 
 Return exactly one verdict: APPROVE, REJECT, or ESCALATE_HUMAN. Include commands and exit results, scope evidence, risk, and specific reasons for any rejection. Never implement the fix yourself.
 """

@@ -9,7 +9,7 @@
 | CI Sweeper         | 15m     | L2    | Reproduce and minimally fix application/database CI      | See `CI Sweeper` below         |
 | Dependency Sweeper | 6h      | L2    | Patch/minor dependency updates with full verification    | See `Dependency Sweeper` below |
 
-L2 means the loop may edit application functionality, tests, dependencies, lockfiles, Prisma schema, additive migrations, API, worker, Angular frontend, and documentation when the work item is approved and well scoped.
+L2 means the loop may edit application functionality, tests, dependencies, lockfiles, Prisma schema, additive migrations, API, worker, Angular frontend, and documentation when the work item is approved and well scoped. Verified L2 changes commit and push directly to `main`; no pull request is created.
 
 ## Codex Automation prompts
 
@@ -24,19 +24,19 @@ Run $loop-constraints, then $loop-budget, then $loop-triage. Read AGENTS.md and 
 ### PR Babysitter — every 10 minutes
 
 ```text
-Run $loop-constraints and $loop-budget, then $pr-review-triage for every pull request in pr-babysitter-state.md, especially Milestone 5 PR #6. If review feedback or CI is actionable, run $loop-guard with loop-ledgers/pr-babysitter.json, make one minimal fix in the watched branch isolated worktree, run all applicable AJ Mock Hub quality gates, and ask the verifier sub-agent from .codex/agents/verifier.toml to check the exact diff. Update the PR and state only after verifier approval. Never merge, force-push, weaken tests, or bypass a human gate. Record the run and exit early when no action is required.
+Run $loop-constraints and $loop-budget, then $pr-review-triage for any open external pull request or unresolved historical review item. Do not create a pull request. If feedback is actionable, synchronize clean main, run $loop-guard with loop-ledgers/pr-babysitter.json, make one minimal fix, run all applicable AJ Mock Hub quality gates, and ask the verifier sub-agent from .codex/agents/verifier.toml to check the exact diff. After verifier approval, commit and push directly to main without force, update state, and notify the user. If no pull request or review item is actionable, exit in under 5k tokens. Never weaken tests or bypass a human gate.
 ```
 
 ### CI Sweeper — every 15 minutes
 
 ```text
-Run $loop-constraints and $loop-budget, then $ci-triage for main and active pull-request failures. If a failure is actionable and not infrastructure or a flake, run $loop-guard with loop-ledgers/ci-sweeper.json, create an isolated task worktree, apply one minimal root-cause fix across the application, API, worker, database, migrations, generation, storage, frontend, tests, or CI configuration as required, and run the full applicable quality and integration gates. Ask the verifier sub-agent from .codex/agents/verifier.toml to approve the exact diff before pushing a draft PR or updating the watched PR. Never merge. Update ci-sweeper-state.md and loop-run-log.md; exit early when CI is green.
+Run $loop-constraints and $loop-budget, then $ci-triage for main failures. If a failure is actionable and not infrastructure or a flake, synchronize clean main, run $loop-guard with loop-ledgers/ci-sweeper.json, apply one minimal root-cause fix across the application, API, worker, database, migrations, generation, storage, frontend, tests, or CI configuration as required, and run the full applicable quality and integration gates. Ask the verifier sub-agent from .codex/agents/verifier.toml to approve the exact diff. After approval, commit and push directly to main without force, update ci-sweeper-state.md and loop-run-log.md, and notify the user. Do not create a pull request. Exit early when CI is green or the working tree is not clean.
 ```
 
 ### Dependency Sweeper — every 6 hours
 
 ```text
-Run $loop-constraints and $loop-budget, then $dependency-triage for every watched manifest in dependency-sweeper-state.md. For one compatible patch or minor update at a time, run $loop-guard with loop-ledgers/dependency-sweeper.json, use an isolated worktree, preserve Nx and Angular/Prisma alignment groups, update the npm lockfile, and run npm ci, formatting, lint, tests, CI build, and both full and production npm audits. Ask the verifier sub-agent from .codex/agents/verifier.toml to approve the exact diff before opening or updating a draft PR. Major upgrades, breaking fixes, licensing/security/cost changes, and destructive migrations require human approval. Never run npm audit fix automatically. Update dependency-sweeper-state.md and loop-run-log.md; exit early when no safe update exists.
+Run $loop-constraints and $loop-budget, then $dependency-triage for every watched manifest in dependency-sweeper-state.md. For one compatible patch or minor update at a time, synchronize clean main, run $loop-guard with loop-ledgers/dependency-sweeper.json, preserve Nx and Angular/Prisma alignment groups, update the npm lockfile, and run npm ci, formatting, lint, tests, CI build, and both full and production npm audits. Ask the verifier sub-agent from .codex/agents/verifier.toml to approve the exact diff. After approval, commit and push directly to main without force, update dependency-sweeper-state.md and loop-run-log.md, and notify the user. Do not create a pull request. Major upgrades, breaking fixes, licensing/security/cost changes, and destructive migrations require human approval. Never run npm audit fix automatically. Exit early when no safe update exists or the working tree is not clean.
 ```
 
 ## Required execution order
@@ -44,13 +44,13 @@ Run $loop-constraints and $loop-budget, then $dependency-triage for every watche
 1. Load `$loop-constraints` and `$loop-budget`.
 2. Read `AGENTS.md` and every authoritative document it requires.
 3. Triage the exact work item and exit early if nothing is actionable.
-4. Create an isolated Codex task worktree; never edit `main`.
+4. Synchronize `main` and confirm the working tree is clean; exit rather than overwrite concurrent or unexplained changes.
 5. Run `$loop-guard` with the pattern-specific ledger before every fix attempt.
 6. Apply one minimal, relevant fix.
 7. Run the applicable repository quality, integration, migration, and security gates.
 8. Ask the independent verifier in `.codex/agents/verifier.toml` to evaluate the exact diff.
-9. Commit review feedback in a new commit and update the relevant state and run-log files.
-10. Notify the human before pushing; open a draft PR or update the watched PR. Never merge.
+9. Update the relevant state and run-log files, then create one cohesive commit directly on `main`.
+10. Push `main` without force and notify the user with complete evidence. Never create a pull request.
 
 ## Pattern ledgers
 
@@ -62,15 +62,15 @@ Run $loop-constraints and $loop-budget, then $dependency-triage for every watche
 
 ## Human gates
 
-- Explicit approval is required for destructive migrations, data loss, credentials, paid services, security policy changes, major dependency upgrades, major architecture decisions, and merging.
+- Explicit approval is required for destructive migrations, data loss, credentials, paid services, security policy changes, major dependency upgrades, and major architecture decisions.
 - Additive database migrations, ordinary application fixes, test fixes, approved review comments, and compatible dependency patch/minor updates are actionable at L2.
-- Never auto-merge, close a PR/issue, weaken tests, force-push, or expose private/customer data.
+- Never create a PR, close an issue, weaken tests, force-push, or expose private/customer data.
 - Stop after the circuit breaker trips or the verifier rejects the same approach repeatedly.
 
-## Worktrees and connectors
+## Concurrency and connectors
 
-- Codex provides isolated worktrees for tasks; use one per fix attempt and discard rejected attempts.
-- GitHub access may read checks, issues, reviews, and comments and may push/update the dedicated task branch after notification.
+- Automated runs target the local `main` checkout. If it is dirty or another run is active, exit without editing and record contention in state.
+- GitHub access may read checks, issues, historical reviews, and comments and may push a verified commit directly to `main`.
 - No additional MCP connector is required for these loops. Do not grant connectors access to private conversations, credentials, cloud resources, or customer documents.
 - Follow `docs/safety.md` for tool scope and absolute prohibitions.
 
@@ -78,7 +78,7 @@ Run $loop-constraints and $loop-budget, then $dependency-triage for every watche
 
 - Follow `loop-budget.md`; early-exit when nothing is actionable.
 - Maximum sub-agent spawns: 0 for L1 and 2 for L2.
-- Maximum automated draft PRs: 2 per day.
+- Direct commits per day are capped per pattern in `loop-budget.md`.
 
 ## References
 

@@ -36,14 +36,16 @@ These documents define product purpose, architecture, milestone boundaries, exec
 - Before marking work complete, run formatting checks, lint, tests, and builds for all affected projects.
 - Do not add features deferred beyond the currently approved milestone.
 
-## Supervised delivery workflow
+## Autonomous direct-main delivery workflow
+
+Standing user instruction: **"DO NOT MAKE PRS, JUST DIRECT COMMIT ON MAIN BRANCH TO SAVE TIME."**
 
 All implementation work must follow this process:
 
-1. Never implement directly on `main`.
-2. Create one branch per approved milestone or task.
-3. Before implementation, inspect the current architecture, state the task scope, and identify risks and assumptions.
-4. During implementation, work incrementally, avoid unrelated refactoring, and do not introduce deferred features.
+1. Work directly on `main`; do not create task branches or pull requests unless the user explicitly reverses this standing instruction.
+2. Before implementation, synchronize `main`, confirm the working tree is clean, inspect the current architecture, state the task scope, and identify risks and assumptions.
+3. During implementation, work incrementally, avoid unrelated refactoring, and do not introduce deferred features.
+4. Preserve existing user work and stop if the working tree contains unexplained changes.
 5. Before requesting review, run:
    - `npm ci`
    - `npm run format:check`
@@ -52,9 +54,9 @@ All implementation work must follow this process:
    - `CI=1 npm run build`
    - Relevant integration and security checks
 6. Perform a self-review covering correctness, security, architecture boundaries, test coverage, error handling, migration safety, secrets, and generated-file safety.
-7. Commit and push the task branch.
-8. Open or update a pull request documenting the completed scope, changed files, architecture decisions, commands and exit results, known issues, and deferred items.
-9. Wait for supervisor review.
-10. Address every review comment in a new commit.
-11. Never merge without explicit approval.
-12. Request user input only for business, security, destructive, credential, cost, or major architecture decisions.
+7. Commit cohesive verified changes directly on `main` and push `main` without force.
+8. Report completed scope, changed files, architecture decisions, commands and exit results, known issues, and deferred items in the task handoff.
+9. Address later feedback in a new direct commit; never rewrite or force-push published history.
+10. Do not create, approve, or merge pull requests as part of the normal workflow.
+11. Automated loops may commit and push verified allowlisted work directly to `main` without waiting for routine approval.
+12. Request user input only for business, security, destructive, credential, cost, legal, or major architecture decisions.

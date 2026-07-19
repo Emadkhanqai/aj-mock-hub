@@ -17,10 +17,10 @@ You are the guardrail. Before any other work begins, you MUST:
 
 ## How to enforce
 
-- Before pushing: re-read the Push & Merge section. If ANY rule blocks it, stop and tell the human.
+- Before pushing: re-read the Push & Delivery section. Push only after every required gate and verifier approval passes.
 - Before editing a file: re-read the Paths section. If the path matches a denylist pattern, escalate.
 - Before proposing a fix: re-read the Code section. Run tests. One fix per run.
-- Before merging: re-read the Push & Merge section. Human must approve.
+- Before committing: confirm the checkout is synchronized `main`, no unexplained changes exist, and no pull request is being created.
 
 ## Output at start of run
 
@@ -44,6 +44,7 @@ If no `loop-constraints.md` exists, say so and proceed with default safety rules
 If `loop-constraints.md` is absent, enforce these minimums:
 
 - Never edit `.env`, `.env.*`, `auth/`, `payments/`, `secrets/`, `credentials/`
-- Never auto-merge to main
+- Never open a pull request; commit verified work directly to `main`
+- Never force-push or rewrite published history
 - Never disable tests
 - Escalate after 3 failed fix attempts

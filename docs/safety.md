@@ -2,7 +2,7 @@
 
 ## Purpose
 
-AJ Mock Hub uses Loop Engineering for supervised, fix-capable maintenance. The loops are allowed to change real application functionality, dependencies, tests, and safe database artifacts; they are not limited to reporting.
+AJ Mock Hub uses Loop Engineering for autonomous, fix-capable maintenance with verified direct commits to `main`. The loops are allowed to change real application functionality, dependencies, tests, and safe database artifacts; they are not limited to reporting.
 
 Repository authority remains, in order: explicit user instructions, `AGENTS.md`, the authoritative documents listed there, and the active loop state. A loop must stop when its proposed action conflicts with that authority.
 
@@ -15,8 +15,8 @@ For an approved and well-scoped work item, PR Babysitter, CI Sweeper, and Depend
 - Keep `nx` and every `@nx/*` package exactly aligned.
 - Edit Prisma schema and create additive migrations after reviewing generated SQL.
 - Fix seed, migration, integration, and application failures using synthetic test data.
-- Commit and push a dedicated task or watched PR branch after notifying the human.
-- Open or update a draft pull request with complete quality-gate evidence.
+- Commit and push cohesive verified changes directly to `main` without opening a pull request.
+- Report complete quality-gate evidence after every direct push.
 
 ## Human gates
 
@@ -25,11 +25,11 @@ Stop and request approval before:
 - Destructive migrations, data loss, production database access, or migration-history rewrites.
 - Major dependency upgrades or changes affecting licensing, cost, privacy, security policy, or architecture.
 - Creating or rotating credentials, changing paid/cloud resources, or accessing private/customer data.
-- Force-pushing, deleting branches, closing work items, or merging a pull request.
+- Force-pushing, deleting branches, or closing work items.
 
 ## Absolute prohibitions
 
-- Never work directly on `main`.
+- Never push an unverified, partial, or unrelated change to `main`.
 - Never weaken, skip, or delete tests merely to obtain a passing result.
 - Never commit secrets, `.env` files, customer content, generated workspaces, uploads, exports, caches, dependencies, build output, or coverage.
 - Never run generated or untrusted code on the host.
@@ -39,9 +39,9 @@ Stop and request approval before:
 
 ## Tool and connector scope
 
-- Local filesystem access is limited to this repository and isolated task worktrees.
+- Local filesystem access is limited to this repository. Automated runs must exit rather than overwrite a dirty working tree.
 - Shell commands are limited to repository inspection, repository-local npm/Nx tools, Docker Compose checks, tests, builds, migrations against isolated local data, and Git operations required by the supervised workflow.
-- GitHub access is limited to this repository's branches, pull requests, reviews, comments, and CI checks.
+- GitHub access is limited to this repository's `main` branch, issues, historical pull requests, and CI checks.
 - No MCP connector is required for the configured loops. If one is introduced later, grant only the minimum read/write scope needed for the active task and do not expose unrelated services or conversations.
 - Network access is limited to package metadata, dependency downloads, GitHub delivery, and task-approved provider checks.
 
@@ -51,4 +51,4 @@ Stop and request approval before:
 - Stop after three failed attempts on the same item or whenever `loop-context` returns exit code 2.
 - One independent verifier must run the applicable checks and approve the exact diff.
 - Required repository gates are `npm ci`, formatting check, lint, tests, `CI=1` build, and relevant integration, migration, and security checks.
-- A passing loop may prepare and push a branch, but only the supervisor may approve merging it.
+- A passing loop may commit and push directly to `main`; force-push and history rewriting remain prohibited.

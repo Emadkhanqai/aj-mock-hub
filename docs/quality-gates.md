@@ -2,7 +2,7 @@
 
 ## Completion rule
 
-A task is not complete and must not be submitted for review unless every applicable gate passes. Do not hide, ignore, or relabel failures. If an approved gate is temporarily inapplicable, document the reason in the pull request and obtain supervisor agreement.
+A task is not complete and must not be committed or pushed unless every applicable gate passes. Do not hide, ignore, or relabel failures. If an approved gate is temporarily inapplicable, document the reason in the task handoff and obtain user agreement.
 
 ## Baseline commands
 
@@ -16,7 +16,7 @@ npm test
 CI=1 npm run build
 ```
 
-Also run all relevant integration, migration, infrastructure, and security checks for the task. Record each exact command and exit status in the pull request.
+Also run all relevant integration, migration, infrastructure, and security checks for the task. Record each exact command and exit status in the task handoff.
 
 ## Functional correctness
 
@@ -110,10 +110,10 @@ Before requesting review, explicitly inspect:
 
 ## Git and delivery gate
 
-- Work is on the approved task branch, never directly on `main`.
+- Work is synchronized and committed directly on `main` under the standing no-PR instruction.
 - The diff contains only approved changes.
 - Commits are cohesive and clearly named.
-- The branch is pushed without force.
-- The pull request contains all required evidence.
+- `main` is pushed without force.
+- The final task handoff contains all required evidence.
 - Review feedback is addressed in new commits.
-- Merge occurs only after explicit supervisor approval.
+- No pull request is created unless the user explicitly changes the delivery policy.

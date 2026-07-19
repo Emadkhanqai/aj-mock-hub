@@ -1,43 +1,43 @@
 # Loop State — AJ Mock Hub
 
-Last run: 2026-07-19 (Codex integration verification)
+Last run: 2026-07-19 (direct-main automation activation)
 
 ## Active loops
 
 ### Daily Triage
 
-- L1 report-only; Codex Automation not activated yet.
+- L1 report-only; full Codex Automation activation approved.
 
 ### PR Babysitter
 
-- L2 assisted; PR #6 and PR #7 are watched.
+- L2 assisted; no pull requests are open and future delivery is direct to `main`.
 
 ### CI Sweeper
 
-- L2 assisted; no active repository failure identified during configuration.
+- L2 assisted; direct verified CI fixes to `main` are approved.
 
 ### Dependency Sweeper
 
-- L2 assisted; existing advisories are classified in `dependency-sweeper-state.md`.
+- L2 assisted; compatible verified dependency fixes may commit directly to `main`.
 
 ## High Priority (loop is acting or waiting on human)
 
-- Milestone 5 PR #6 remains open and requires supervisor review before merge.
-- Loop Engineering PR #7 is Codex-native, fully verified, and awaiting supervisor review.
+- Milestone 6 preview and revision work is the next roadmap capability.
+- Fully activate and verify all four Codex automations.
 
 ## Watch List
 
 - Existing dependency advisories are tracked in `dependency-sweeper-state.md`.
-- Recurring Codex Automations must be enabled from the Codex app after this configuration is merged.
+- Existing dependency advisories have no safe automatic resolution yet; the Prisma recommendation is a human-gated major downgrade.
 
 ## Recent Noise (ignored this run)
 
-- Claude and Grok artifacts copied by generic fix-capable starters were removed because this project uses Codex.
+- PR #6 and PR #7 were merged after explicit approval; the open PR list is empty.
 
 ## Human gates
 
-- Automation activation and any higher token budget remain explicit cost decisions.
-- Destructive migrations, credentials, major upgrades, architecture changes, and merges require human approval.
+- Automation activation and higher official pattern budgets were explicitly approved on 2026-07-19.
+- Destructive migrations, credentials, major upgrades, and architecture changes require human approval.
 
 ## Budget
 
@@ -45,4 +45,4 @@ Last run: 2026-07-19 (Codex integration verification)
 
 ---
 
-Run log: exact Codex initializer and fix-capable starter commands completed; Loop Audit scored 100/100 L3, circuit breakers passed, and repository quality gates passed.
+Run log: Milestone 5 and Loop Engineering PRs merged; standing no-PR direct-main policy approved; automation activation in progress.

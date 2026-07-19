@@ -24,8 +24,8 @@ For every approved milestone or task:
 1. Read all authoritative documents.
 2. Inspect the repository and current architecture.
 3. Confirm the working tree and current branch.
-4. Never implement directly on `main`.
-5. Create or use one dedicated branch for the approved scope.
+4. Synchronize and work directly on `main` under the standing no-PR instruction.
+5. Confirm the working tree is clean before editing and preserve unexplained user changes.
 6. State scope, exclusions, risks, and assumptions.
 7. Produce a concise implementation plan.
 8. Implement incrementally and only within approved scope.
@@ -33,12 +33,11 @@ For every approved milestone or task:
 10. Run every required quality, integration, migration, and security check.
 11. Perform the required self-review.
 12. Commit cohesive changes.
-13. Push the milestone branch.
-14. Open or update a pull request with complete evidence.
-15. Wait for supervisor review before merge.
-16. Address every review comment in a new commit.
-17. Never merge without explicit approval.
-18. After approval and merge, begin only the next approved milestone.
+13. Commit cohesive verified changes directly on `main`.
+14. Push `main` without force and report complete evidence in the task handoff.
+15. Address feedback in a new direct commit; never rewrite published history.
+16. Do not create pull requests unless the user explicitly changes the delivery policy.
+17. Continue with the next approved task after the direct commit is synchronized.
 
 ## Routine decisions Codex may make
 
@@ -69,7 +68,7 @@ Stop and request user input only when:
 - A major architecture change is needed.
 - Legal or compliance input is required.
 - Tests repeatedly fail and the approved design must change.
-- Merge approval is required.
+- A push would require force, history rewriting, or overwriting unexplained user changes.
 
 Do not stop for routine naming, file structure, tests, styling, validation details, or implementation choices.
 
@@ -84,9 +83,9 @@ Do not stop for routine naming, file structure, tests, styling, validation detai
 - Keep generated and local-only files out of Git.
 - Record important architecture decisions as they are approved.
 
-## Pull request contract
+## Direct-main delivery contract
 
-Every implementation pull request must include:
+Every implementation handoff must include:
 
 - Approved scope completed.
 - Explicit exclusions and deferred items.
@@ -97,7 +96,7 @@ Every implementation pull request must include:
 - Known issues and limitations.
 - Any follow-up requiring supervisor attention.
 
-The pull request must remain unmerged until the supervisor explicitly approves it.
+The verified commit must be pushed directly to `main` without force. Pull requests are intentionally disabled by the standing user instruction.
 
 ## Public repository policy
 
@@ -112,4 +111,4 @@ This repository is public. Never commit:
 - Uploaded files.
 - Generated workspaces, previews, exports, or build artifacts.
 
-Use synthetic fixtures in tests and documentation. Treat logs and command output as potentially sensitive before including them in commits or pull requests.
+Use synthetic fixtures in tests and documentation. Treat logs and command output as potentially sensitive before including them in commits or task handoffs.
