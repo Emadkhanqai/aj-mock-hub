@@ -108,14 +108,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
         </div>
         @if (versions().length > 1) {
           <div class="compare-toolbar">
-            <span>Select any two versions below to compare.</span>
+            <span>Select 2 versions to see what changed.</span>
             <button
               class="secondary-button"
               type="button"
               [disabled]="compareSelection().length !== 2 || comparing()"
               (click)="compareVersions()"
             >
-              {{ comparing() ? 'Comparing…' : 'Compare versions' }}
+              {{ comparing() ? 'Comparing…' : 'Compare selected' }}
             </button>
           </div>
         }

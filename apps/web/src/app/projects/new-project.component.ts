@@ -29,10 +29,9 @@ import { map, switchMap } from 'rxjs';
         <div class="form-intro">
           <span>01</span>
           <div>
-            <h2>Project foundation</h2>
+            <h2>Start your project</h2>
             <p>
-              Name the durable workspace. You will capture requirements in its
-              first immutable version.
+              Add the essentials now. You can refine the generated app later.
             </p>
           </div>
         </div>
@@ -73,7 +72,7 @@ import { map, switchMap } from 'rxjs';
           <textarea
             formControlName="instructions"
             maxlength="20000"
-            rows="6"
+            rows="4"
             placeholder="Example: Create a customer portal with a dashboard, requests table, status filters and a simple approval flow."
           ></textarea>
           @if (
@@ -93,7 +92,7 @@ import { map, switchMap } from 'rxjs';
           <textarea
             formControlName="description"
             maxlength="2000"
-            rows="6"
+            rows="3"
             placeholder="What should this prototype help the team understand or validate?"
           ></textarea>
         </label>
@@ -109,9 +108,7 @@ import { map, switchMap } from 'rxjs';
             type="submit"
             [disabled]="form.invalid || submitting()"
           >
-            {{
-              submitting() ? 'Setting up…' : 'Create project and first version'
-            }}
+            {{ submitting() ? 'Setting up…' : 'Create project' }}
           </button>
         </div>
       </form>

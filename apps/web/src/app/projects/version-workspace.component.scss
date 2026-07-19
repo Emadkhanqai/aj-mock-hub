@@ -1,8 +1,9 @@
 :host ::ng-deep .workspace-layout {
-  grid-template-columns: minmax(230px, 0.62fr) minmax(480px, 1.55fr) minmax(
-      230px,
-      0.62fr
+  grid-template-columns: minmax(275px, 0.7fr) minmax(500px, 1.7fr) minmax(
+      250px,
+      0.64fr
     );
+  gap: 16px;
 }
 .workflow-rail {
   position: sticky;
@@ -14,10 +15,41 @@
 }
 .locked-note {
   display: block;
-  margin-top: 9px;
+  margin-top: 7px;
   color: #75837b;
   font-size: 0.64rem;
   line-height: 1.45;
+}
+
+:host ::ng-deep .requirements-rail {
+  gap: 14px;
+}
+
+:host ::ng-deep .instruction-panel,
+:host ::ng-deep .document-panel {
+  padding: 20px;
+}
+
+:host ::ng-deep .document-panel h2 {
+  margin-block: 5px 7px;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .panel-copy {
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+:host ::ng-deep .upload-control {
+  margin-top: 13px;
+}
+
+:host ::ng-deep .upload-control span {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 0.7rem;
+  text-align: center;
 }
 .workflow-heading h2 {
   margin: 8px 0 7px;

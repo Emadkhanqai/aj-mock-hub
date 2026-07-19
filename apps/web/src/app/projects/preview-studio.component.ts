@@ -103,6 +103,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
                 </button>
               }
             </div>
+            <button
+              class="editor-toggle"
+              type="button"
+              [attr.aria-pressed]="editorOpen()"
+              (click)="editorOpen.set(!editorOpen())"
+            >
+              {{ editorOpen() ? 'Hide editor' : 'Edit app' }}
+            </button>
           </div>
         </header>
 
@@ -154,195 +162,205 @@ import { ProjectsApiService } from '../core/projects-api.service';
             </div>
           </section>
 
-          <aside class="inspector-panel">
-            <small>Edit selected item</small>
-            @if (selected()) {
-              <div class="selection-card">
-                <span>{{
-                  selected()!.type === 'button' ? 'Button' : 'Section'
-                }}</span>
-                <h2>{{ selected()!.label }}</h2>
-                <details class="developer-details">
-                  <summary>Developer details</summary>
-                  <dl>
-                    <div>
-                      <dt>Item ID</dt>
-                      <dd>{{ selected()!.id }}</dd>
+          @if (editorOpen()) {
+            <aside class="inspector-panel">
+              <small>Edit selected item</small>
+              @if (selected()) {
+                <div class="selection-card">
+                  <span>{{
+                    selected()!.type === 'button' ? 'Button' : 'Section'
+                  }}</span>
+                  <h2>{{ selected()!.label }}</h2>
+                  <details class="developer-details">
+                    <summary>Developer details</summary>
+                    <dl>
+                      <div>
+                        <dt>Item ID</dt>
+                        <dd>{{ selected()!.id }}</dd>
+                      </div>
+                      <div>
+                        <dt>Page</dt>
+                        <dd>{{ selected()!.pageId }}</dd>
+                      </div>
+                      <div>
+                        <dt>File</dt>
+                        <dd>{{ selected()!.file }}</dd>
+                      </div>
+                    </dl>
+                  </details>
+                </div>
+                @if (
+                  !revision() ||
+                  ['FAILED', 'DISCARDED', 'ACCEPTED'].includes(
+                    revision()!.status
+                  )
+                ) {
+                  <div class="revision-form">
+                    <div
+                      class="editor-tabs"
+                      role="tablist"
+                      aria-label="Editing tools"
+                    >
+                      @for (tab of editorTabs; track tab.value) {
+                        <button
+                          type="button"
+                          role="tab"
+                          [attr.aria-selected]="editorTab() === tab.value"
+                          [class.active]="editorTab() === tab.value"
+                          (click)="editorTab.set(tab.value)"
+                        >
+                          {{ tab.label }}
+                        </button>
+                      }
                     </div>
-                    <div>
-                      <dt>Page</dt>
-                      <dd>{{ selected()!.pageId }}</dd>
-                    </div>
-                    <div>
-                      <dt>File</dt>
-                      <dd>{{ selected()!.file }}</dd>
-                    </div>
-                  </dl>
-                </details>
-              </div>
-              @if (
-                !revision() ||
-                ['FAILED', 'DISCARDED', 'ACCEPTED'].includes(revision()!.status)
-              ) {
-                <div class="revision-form">
-                  <div
-                    class="editor-tabs"
-                    role="tablist"
-                    aria-label="Editing tools"
-                  >
-                    @for (tab of editorTabs; track tab.value) {
+                    @if (editorTab() === 'CONTENT') {
+                      <label
+                        >Text<input [formControl]="replacementText"
+                      /></label>
+                      <label
+                        >What should change?<textarea
+                          [formControl]="instruction"
+                          rows="3"
+                        ></textarea>
+                      </label>
                       <button
                         type="button"
-                        role="tab"
-                        [attr.aria-selected]="editorTab() === tab.value"
-                        [class.active]="editorTab() === tab.value"
-                        (click)="editorTab.set(tab.value)"
+                        [disabled]="
+                          creatingRevision() ||
+                          instruction.invalid ||
+                          replacementText.invalid
+                        "
+                        (click)="createRevision('RENAME')"
                       >
-                        {{ tab.label }}
+                        {{
+                          creatingRevision()
+                            ? 'Starting…'
+                            : 'Preview text change'
+                        }}
                       </button>
+                    } @else if (editorTab() === 'STYLE') {
+                      <div class="color-grid">
+                        <label
+                          >Text color<input
+                            type="color"
+                            [formControl]="textColor"
+                        /></label>
+                        <label
+                          >Background<input
+                            type="color"
+                            [formControl]="backgroundColor"
+                        /></label>
+                      </div>
+                      <button
+                        type="button"
+                        [disabled]="creatingRevision()"
+                        (click)="createRevision('RECOLOR')"
+                      >
+                        Preview colors
+                      </button>
+                      <div class="theme-picker">
+                        <span>Page theme</span>
+                        <div>
+                          @for (preset of themePresets; track preset.value) {
+                            <button
+                              type="button"
+                              class="theme-swatch"
+                              [class.active]="
+                                themePreset.value === preset.value
+                              "
+                              [style.--swatch]="preset.color"
+                              (click)="themePreset.setValue(preset.value)"
+                            >
+                              <i></i>{{ preset.label }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="secondary-action"
+                        [disabled]="creatingRevision()"
+                        (click)="createRevision('THEME')"
+                      >
+                        Preview page theme
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        [disabled]="creatingRevision()"
+                        (click)="createRevision('CLONE')"
+                      >
+                        Duplicate this item
+                      </button>
+                      <div class="add-button-control">
+                        <label
+                          >New button text<input [formControl]="buttonLabel"
+                        /></label>
+                        <button
+                          type="button"
+                          [disabled]="creatingRevision() || buttonLabel.invalid"
+                          (click)="createRevision('ADD_BUTTON')"
+                        >
+                          Add button to page
+                        </button>
+                      </div>
                     }
                   </div>
-                  @if (editorTab() === 'CONTENT') {
-                    <label>Text<input [formControl]="replacementText" /></label>
-                    <label
-                      >What should change?<textarea
-                        [formControl]="instruction"
-                        rows="3"
-                      ></textarea>
-                    </label>
-                    <button
-                      type="button"
-                      [disabled]="
-                        creatingRevision() ||
-                        instruction.invalid ||
-                        replacementText.invalid
-                      "
-                      (click)="createRevision('RENAME')"
-                    >
-                      {{
-                        creatingRevision() ? 'Starting…' : 'Preview text change'
-                      }}
-                    </button>
-                  } @else if (editorTab() === 'STYLE') {
-                    <div class="color-grid">
-                      <label
-                        >Text color<input
-                          type="color"
-                          [formControl]="textColor"
-                      /></label>
-                      <label
-                        >Background<input
-                          type="color"
-                          [formControl]="backgroundColor"
-                      /></label>
-                    </div>
-                    <button
-                      type="button"
-                      [disabled]="creatingRevision()"
-                      (click)="createRevision('RECOLOR')"
-                    >
-                      Preview colors
-                    </button>
-                    <div class="theme-picker">
-                      <span>Page theme</span>
-                      <div>
-                        @for (preset of themePresets; track preset.value) {
-                          <button
-                            type="button"
-                            class="theme-swatch"
-                            [class.active]="themePreset.value === preset.value"
-                            [style.--swatch]="preset.color"
-                            (click)="themePreset.setValue(preset.value)"
-                          >
-                            <i></i>{{ preset.label }}
-                          </button>
-                        }
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      class="secondary-action"
-                      [disabled]="creatingRevision()"
-                      (click)="createRevision('THEME')"
-                    >
-                      Preview page theme
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      [disabled]="creatingRevision()"
-                      (click)="createRevision('CLONE')"
-                    >
-                      Duplicate this item
-                    </button>
-                    <div class="add-button-control">
-                      <label
-                        >New button text<input [formControl]="buttonLabel"
-                      /></label>
+                }
+                @if (revision()) {
+                  <div
+                    class="revision-status"
+                    [attr.data-status]="revision()!.status"
+                  >
+                    <span>{{
+                      revision()!.status === 'READY'
+                        ? 'Preview ready'
+                        : revision()!.status
+                    }}</span>
+                    <p>{{ revisionMessage() }}</p>
+                  </div>
+                  @if (revision()!.status === 'READY') {
+                    <label class="accept-label"
+                      >Name this version<input [formControl]="versionLabel"
+                    /></label>
+                    <div class="revision-actions">
                       <button
                         type="button"
-                        [disabled]="creatingRevision() || buttonLabel.invalid"
-                        (click)="createRevision('ADD_BUTTON')"
+                        class="discard"
+                        [disabled]="acting()"
+                        (click)="discardRevision()"
                       >
-                        Add button to page
+                        Discard
+                      </button>
+                      <button
+                        type="button"
+                        [disabled]="acting() || versionLabel.invalid"
+                        (click)="acceptRevision()"
+                      >
+                        Save version
                       </button>
                     </div>
                   }
-                </div>
-              }
-              @if (revision()) {
-                <div
-                  class="revision-status"
-                  [attr.data-status]="revision()!.status"
-                >
-                  <span>{{
-                    revision()!.status === 'READY'
-                      ? 'Preview ready'
-                      : revision()!.status
-                  }}</span>
-                  <p>{{ revisionMessage() }}</p>
-                </div>
-                @if (revision()!.status === 'READY') {
-                  <label class="accept-label"
-                    >Name this version<input [formControl]="versionLabel"
-                  /></label>
-                  <div class="revision-actions">
-                    <button
-                      type="button"
-                      class="discard"
-                      [disabled]="acting()"
-                      (click)="discardRevision()"
-                    >
-                      Remove changes
-                    </button>
-                    <button
-                      type="button"
-                      [disabled]="acting() || versionLabel.invalid"
-                      (click)="acceptRevision()"
-                    >
-                      Keep changes
-                    </button>
-                  </div>
                 }
+                @if (actionError()) {
+                  <p class="revision-error" role="alert">{{ actionError() }}</p>
+                }
+              } @else {
+                <div class="inspector-empty">
+                  <span>↖</span>
+                  <h2>Click anything to edit</h2>
+                  <p>
+                    Select a card or button in the app preview. Its editing
+                    tools will appear here.
+                  </p>
+                </div>
               }
-              @if (actionError()) {
-                <p class="revision-error" role="alert">{{ actionError() }}</p>
-              }
-            } @else {
-              <div class="inspector-empty">
-                <span>↖</span>
-                <h2>Click anything to edit</h2>
-                <p>
-                  Select a card or button in the app preview. Its editing tools
-                  will appear here.
-                </p>
-              </div>
-            }
-            <footer>
-              <span>Preview fingerprint</span>
-              <code>{{ preview()!.contentHash.slice(0, 12) }}…</code>
-            </footer>
-          </aside>
+              <footer>
+                <span>Preview fingerprint</span>
+                <code>{{ preview()!.contentHash.slice(0, 12) }}…</code>
+              </footer>
+            </aside>
+          }
         </div>
       }
     </section>
@@ -353,13 +371,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
         display: block;
       }
       .preview-studio {
-        width: min(1500px, calc(100vw - 48px));
+        width: min(1600px, calc(100vw - 32px));
         margin: 0 auto;
       }
       .preview-back {
         display: inline-flex;
-        margin: 2px 0 22px;
+        margin: 0 0 12px;
         color: #7cf6c3;
+        font-size: 0.76rem;
         text-decoration: none;
         font-weight: 750;
       }
@@ -386,8 +405,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
         display: flex;
         align-items: end;
         justify-content: space-between;
-        gap: 24px;
-        margin-bottom: 20px;
+        gap: 18px;
+        margin-bottom: 12px;
       }
       .preview-toolbar small,
       .inspector-panel > small {
@@ -398,15 +417,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
         text-transform: uppercase;
       }
       .preview-toolbar h1 {
-        max-width: 760px;
-        margin: 8px 0 2px;
-        font-size: clamp(2.2rem, 5vw, 4.7rem);
-        line-height: 1;
+        max-width: 620px;
+        margin: 5px 0 1px;
+        font-size: clamp(1.8rem, 3vw, 3rem);
+        line-height: 1.03;
         overflow-wrap: anywhere;
       }
       .preview-toolbar p {
         margin: 0;
         color: #93a29b;
+        font-size: 0.78rem;
       }
       .viewport-switcher {
         display: flex;
@@ -422,6 +442,28 @@ import { ProjectsApiService } from '../core/projects-api.service';
         flex-wrap: wrap;
         justify-content: flex-end;
       }
+      .editor-toggle {
+        min-height: 36px;
+        padding: 0 12px;
+        color: #b7c5bd;
+        background: rgba(11, 18, 15, 0.86);
+        border: 1px solid #ffffff1a;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 760;
+        cursor: pointer;
+        transition:
+          color 150ms ease,
+          border-color 150ms ease,
+          transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .editor-toggle[aria-pressed='true'] {
+        color: #7cf6c3;
+        border-color: #7cf6c34a;
+      }
+      .editor-toggle:active {
+        transform: scale(0.97);
+      }
       .mode-switcher {
         border-color: #9885ff38;
       }
@@ -429,7 +471,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
         display: inline-flex;
         gap: 6px;
         align-items: center;
-        padding: 9px 13px;
+        padding: 7px 10px;
         border: 0;
         border-radius: 9px;
         color: #91a099;
@@ -460,16 +502,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
       .preview-meta {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        margin: 0 0 16px;
+        margin: 0 0 10px;
         overflow: hidden;
         border: 1px solid #ffffff16;
-        border-radius: 14px;
+        border-radius: 11px;
         background: #0d1512a8;
       }
       .preview-meta div {
         display: grid;
         gap: 4px;
-        padding: 12px 15px;
+        padding: 8px 12px;
         border-right: 1px solid #ffffff12;
       }
       .preview-meta div:last-child {
@@ -577,19 +619,20 @@ import { ProjectsApiService } from '../core/projects-api.service';
         border-top: 1px solid #ffffff12;
       }
       .studio-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 330px;
-        gap: 16px;
+        position: relative;
       }
       .preview-canvas,
       .inspector-panel {
         border: 1px solid #d9ffea1d;
-        border-radius: 22px;
+        border-radius: 16px;
         background: linear-gradient(145deg, #ffffff0c, transparent), #0c1411d9;
-        box-shadow: 0 24px 80px #0006;
+        box-shadow: 0 16px 46px #0004;
+      }
+      .preview-canvas {
+        width: 100%;
       }
       .browser-chrome {
-        height: 46px;
+        height: 38px;
         display: flex;
         align-items: center;
         gap: 7px;
@@ -617,8 +660,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
         font-size: 0.72rem;
       }
       .device-stage {
-        min-height: 690px;
-        padding: 24px;
+        min-height: 726px;
+        padding: 12px;
         display: flex;
         align-items: flex-start;
         justify-content: center;
@@ -632,13 +675,13 @@ import { ProjectsApiService } from '../core/projects-api.service';
       .device-frame {
         position: relative;
         width: 100%;
-        height: 640px;
+        height: 700px;
         overflow: hidden;
         border: 1px solid #ffffff24;
-        border-radius: 13px;
+        border-radius: 10px;
         background: #070b0a;
-        transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-        box-shadow: 0 18px 55px #0008;
+        transition: width 180ms cubic-bezier(0.23, 1, 0.32, 1);
+        box-shadow: 0 12px 32px #0006;
       }
       .frame-loader {
         position: absolute;
@@ -676,22 +719,25 @@ import { ProjectsApiService } from '../core/projects-api.service';
         background: #070b0a;
       }
       .device-frame[data-viewport='DESKTOP'] {
-        width: 720px;
-      }
-      .device-frame[data-viewport='DESKTOP'] iframe {
-        width: 1200px;
-        height: 1067px;
-        transform: scale(0.6);
-        transform-origin: top left;
+        width: min(100%, 1280px);
       }
       .inspector-panel {
-        padding: 24px;
+        position: absolute;
+        z-index: 3;
+        top: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: 286px;
+        padding: 18px;
         display: flex;
-        min-height: 736px;
+        min-height: 0;
         flex-direction: column;
+        background:
+          linear-gradient(145deg, #ffffff0b, transparent), rgba(9, 16, 13, 0.95);
+        backdrop-filter: blur(22px) saturate(135%);
       }
       .selection-card {
-        margin-top: 26px;
+        margin-top: 18px;
       }
       .selection-card > span {
         padding: 5px 9px;
@@ -702,8 +748,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
         text-transform: uppercase;
       }
       .selection-card h2 {
-        margin: 16px 0 20px;
-        font-size: 1.6rem;
+        margin: 12px 0 14px;
+        font-size: 1.3rem;
         overflow-wrap: anywhere;
       }
       .selection-card dl {
@@ -776,8 +822,8 @@ import { ProjectsApiService } from '../core/projects-api.service';
         background: #7cf6c3;
       }
       .revision-status {
-        margin-top: 18px;
-        padding: 12px;
+        margin-top: 12px;
+        padding: 10px;
         border: 1px solid #7cf6c333;
         border-radius: 10px;
         color: #9fb0a8;
@@ -794,13 +840,20 @@ import { ProjectsApiService } from '../core/projects-api.service';
         line-height: 1.45;
       }
       .accept-label {
-        margin-top: 14px;
+        margin-top: 10px;
       }
       .revision-actions {
-        display: grid;
-        grid-template-columns: 1fr 1.5fr;
-        gap: 8px;
-        margin-top: 10px;
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      .revision-actions button {
+        width: auto;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-size: 0.7rem;
       }
       .revision-actions .discard {
         color: #ffaaa4;
@@ -861,16 +914,20 @@ import { ProjectsApiService } from '../core/projects-api.service';
           border-bottom: 1px solid #ffffff12;
         }
         .studio-grid {
+          display: grid;
           grid-template-columns: 1fr;
+          gap: 10px;
         }
         .inspector-panel {
+          position: static;
+          width: auto;
           min-height: 340px;
         }
         .device-stage {
           min-height: 590px;
         }
         .device-frame {
-          height: 540px;
+          height: 600px;
         }
       }
       @media (max-width: 620px) {
@@ -930,6 +987,7 @@ export class PreviewStudioComponent implements OnInit {
   readonly revision = signal<DraftRevisionResponse | null>(null);
   readonly activePreviewUrl = signal<SafeResourceUrl | null>(null);
   readonly showingDraft = signal(false);
+  readonly editorOpen = signal(false);
   readonly creatingRevision = signal(false);
   readonly acting = signal(false);
   readonly actionError = signal('');
@@ -997,6 +1055,7 @@ export class PreviewStudioComponent implements OnInit {
     this.loading.set(true);
     this.error.set(false);
     this.selected.set(null);
+    this.editorOpen.set(false);
     this.revision.set(null);
     this.showingDraft.set(false);
     this.actionError.set('');
@@ -1025,6 +1084,7 @@ export class PreviewStudioComponent implements OnInit {
     if (event.source !== this.previewFrame?.nativeElement.contentWindow) return;
     if (!this.isSelectionMessage(event.data)) return;
     this.selected.set(event.data.element);
+    this.editorOpen.set(true);
     this.replacementText.setValue(event.data.element.label);
     this.instruction.setValue(
       `Update ${event.data.element.label} on ${event.data.element.pageId}.`,

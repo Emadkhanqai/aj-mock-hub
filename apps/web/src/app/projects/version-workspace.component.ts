@@ -67,22 +67,20 @@ export function formatPipelineLog(message: string) {
             <div class="panel-title-row">
               <div>
                 <span class="panel-index">02</span>
-                <h2>Source documents</h2>
+                <h2>Source files</h2>
               </div>
               <span>{{ documents().length }}/10</span>
             </div>
-            <p class="panel-copy">
-              Add notes, PDFs or Word files · up to 10 MB each
-            </p>
+            <p class="panel-copy">Notes, PDF or Word · 10 MB max</p>
             @if (specification()?.status === 'APPROVED') {
               <a
                 class="upload-control is-link"
                 [routerLink]="['/projects', projectId]"
               >
-                <span>＋ Create a new version to add files</span>
+                <span>＋ New version for files</span>
               </a>
               <small class="locked-note"
-                >Files are locked after the design plan is approved.</small
+                >Approved versions keep their files locked.</small
               >
             } @else {
               <label class="upload-control">
