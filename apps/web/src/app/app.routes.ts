@@ -17,6 +17,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'projects/:projectId/versions/:versionId',
+    loadComponent: () =>
+      import('./projects/version-workspace.component').then(
+        (module) => module.VersionWorkspaceComponent,
+      ),
+  },
+  {
     path: 'projects/:projectId',
     loadComponent: () =>
       import('./projects/project-detail.component').then(

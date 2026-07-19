@@ -22,4 +22,10 @@ describe('PrismaService', () => {
     expect(service.$disconnect).toEqual(expect.any(Function));
     await service.$disconnect();
   });
+
+  it('rejects unsafe schema names before configuring the PostgreSQL search path', () => {
+    process.env['DATABASE_URL'] =
+      'postgresql://user:password@127.0.0.1:5432/example?schema=public%3Bdrop';
+    expect(() => new PrismaService()).toThrow('schema is invalid');
+  });
 });

@@ -118,6 +118,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
                     version.createdAt | date: 'medium'
                   }}</time
                   ><small>Immutable</small>
+                  <a
+                    class="version-open"
+                    [routerLink]="[
+                      '/projects',
+                      project()!.id,
+                      'versions',
+                      version.id,
+                    ]"
+                    >Open workspace →</a
+                  >
                 </div>
               </li>
             }

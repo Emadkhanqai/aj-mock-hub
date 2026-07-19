@@ -105,6 +105,102 @@ export class JobsService {
     return { job: this.mapJob(pipelineJob), reused };
   }
 
+  async createGeneration(
+    projectId: string,
+    projectVersionId: string,
+    input: CreatePipelineJobDto,
+  ): Promise<CreatePipelineJobResponse> {
+    const version = await this.prisma.projectVersion.findFirst({
+      where: { id: projectVersionId, projectId },
+      select: {
+        versionNumber: true,
+        specification: { select: { status: true } },
+      },
+    });
+    if (!version) return this.versionNotFound();
+    if (version.specification?.status !== 'APPROVED') {
+      throw new ConflictException({
+        code: 'UI_SPECIFICATION_NOT_APPROVED',
+        message: 'Approve the UI specification before Angular generation.',
+      });
+    }
+
+    let reused = false;
+    let pipelineJob: PipelineJob;
+    try {
+      pipelineJob = await this.prisma.pipelineJob.create({
+        data: {
+          projectId,
+          projectVersionId,
+          type: 'ANGULAR_GENERATION',
+          idempotencyKey: input.idempotencyKey,
+          logs: {
+            create: {
+              sequence: 1,
+              level: 'INFO',
+              message: 'Angular generation job queued.',
+            },
+          },
+        },
+      });
+    } catch (error: unknown) {
+      if (!this.isUniqueConstraintError(error)) throw error;
+      reused = true;
+      pipelineJob = await this.prisma.pipelineJob.findUniqueOrThrow({
+        where: {
+          projectVersionId_idempotencyKey: {
+            projectVersionId,
+            idempotencyKey: input.idempotencyKey,
+          },
+        },
+      });
+      if (pipelineJob.type !== 'ANGULAR_GENERATION') {
+        throw new ConflictException({
+          code: 'IDEMPOTENCY_KEY_CONFLICT',
+          message: 'The idempotency key belongs to a different job type.',
+        });
+      }
+    }
+
+    if (!reused || pipelineJob.errorCode === 'QUEUE_DISPATCH_FAILED') {
+      try {
+        await this.queue.enqueueGeneration({
+          pipelineJobId: pipelineJob.id,
+          projectId,
+          projectVersionId,
+          versionNumber: version.versionNumber,
+        });
+        if (pipelineJob.errorCode === 'QUEUE_DISPATCH_FAILED') {
+          pipelineJob = await this.prisma.pipelineJob.update({
+            where: { id: pipelineJob.id },
+            data: {
+              status: 'QUEUED',
+              errorCode: null,
+              errorMessage: null,
+              failedAt: null,
+            },
+          });
+        }
+      } catch {
+        await this.prisma.pipelineJob.update({
+          where: { id: pipelineJob.id },
+          data: {
+            status: 'FAILED',
+            failedAt: new Date(),
+            errorCode: 'QUEUE_DISPATCH_FAILED',
+            errorMessage:
+              'The job could not be dispatched to the worker queue.',
+          },
+        });
+        throw new ServiceUnavailableException({
+          code: 'QUEUE_UNAVAILABLE',
+          message: 'The generation queue is temporarily unavailable.',
+        });
+      }
+    }
+    return { job: this.mapJob(pipelineJob), reused };
+  }
+
   async list(
     projectId: string,
     projectVersionId: string,

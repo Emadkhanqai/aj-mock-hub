@@ -1,5 +1,5 @@
-import { copyFile, lstat, mkdir, readdir } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
+import { copyFile, lstat, mkdir, readdir, writeFile } from 'node:fs/promises';
+import { dirname, resolve, sep } from 'node:path';
 
 const SAFE_SEGMENT = /^[a-zA-Z0-9-]+$/;
 
@@ -48,6 +48,32 @@ export class WorkspaceService {
       throw new Error('Template destination escapes its configured root');
     }
     await this.copyDirectory(resolve(templateRoot), target);
+  }
+
+  async writeControlledFiles(
+    destination: string,
+    files: ReadonlyArray<{ path: string; content: string }>,
+  ): Promise<void> {
+    const targetRoot = resolve(destination);
+    if (!targetRoot.startsWith(`${this.root}${sep}`)) {
+      throw new Error('File destination escapes its configured root');
+    }
+    for (const file of files) {
+      if (
+        !file.path ||
+        file.path.startsWith('/') ||
+        file.path.includes('..') ||
+        file.path.includes('\\')
+      ) {
+        throw new Error('Controlled file path is invalid');
+      }
+      const target = resolve(targetRoot, file.path);
+      if (!target.startsWith(`${targetRoot}${sep}`)) {
+        throw new Error('Controlled file path escapes its destination');
+      }
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, file.content, { encoding: 'utf8', flag: 'w' });
+    }
   }
 
   private async copyDirectory(

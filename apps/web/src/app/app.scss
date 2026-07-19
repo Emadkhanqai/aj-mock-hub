@@ -686,6 +686,440 @@ main.route-entering {
   color: var(--mint);
 }
 
+:host ::ng-deep .version-open {
+  margin-top: 7px;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-decoration: none;
+  text-transform: none;
+}
+
+:host ::ng-deep .version-open:hover {
+  color: var(--lime);
+}
+
+:host ::ng-deep .workspace-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 30px 0 48px;
+}
+
+:host ::ng-deep .workspace-kicker,
+:host ::ng-deep .panel-index {
+  color: var(--mint);
+  font-size: 0.7rem;
+  font-weight: 820;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .workspace-hero h1 {
+  max-width: 16ch;
+  margin: 12px 0 4px;
+  font-size: clamp(2.8rem, 6vw, 5.7rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.04;
+  overflow-wrap: anywhere;
+}
+
+:host ::ng-deep .workspace-hero p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.08rem;
+}
+
+:host ::ng-deep .stage-pill {
+  padding: 9px 13px;
+  color: var(--mint);
+  background: rgba(120, 246, 193, 0.07);
+  border: 1px solid rgba(120, 246, 193, 0.22);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .stage-pill.approved {
+  color: #06120c;
+  background: var(--mint);
+}
+
+:host ::ng-deep .workspace-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.72fr) minmax(0, 1.8fr);
+  gap: 20px;
+  align-items: start;
+}
+
+:host ::ng-deep .requirements-rail {
+  display: grid;
+  gap: 20px;
+}
+
+:host ::ng-deep .glass-panel {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 42%),
+    rgba(13, 21, 18, 0.7);
+  border: 1px solid rgba(205, 255, 230, 0.14);
+  border-radius: 21px;
+  box-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(24px) saturate(145%);
+}
+
+:host ::ng-deep .instruction-panel,
+:host ::ng-deep .document-panel {
+  padding: 25px;
+}
+
+:host ::ng-deep .glass-panel h2 {
+  margin: 8px 0 10px;
+  font-size: 1.2rem;
+  letter-spacing: -0.025em;
+}
+
+:host ::ng-deep .instruction-panel p,
+:host ::ng-deep .panel-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+:host ::ng-deep .panel-title-row,
+:host ::ng-deep .specification-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+:host ::ng-deep .panel-title-row > span {
+  color: #718078;
+  font-size: 0.7rem;
+}
+
+:host ::ng-deep .upload-control {
+  display: block;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+:host ::ng-deep .upload-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+:host ::ng-deep .upload-control span {
+  display: grid;
+  min-height: 44px;
+  color: var(--mint);
+  background: rgba(120, 246, 193, 0.07);
+  border: 1px dashed rgba(120, 246, 193, 0.3);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 760;
+  place-items: center;
+}
+
+:host ::ng-deep .document-list {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+:host ::ng-deep .document-list li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  background: rgba(2, 8, 5, 0.38);
+  border-radius: 11px;
+}
+
+:host ::ng-deep .file-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: #07100c;
+  background: linear-gradient(135deg, var(--lime), var(--mint));
+  border-radius: 9px;
+  font-size: 0.55rem;
+  font-weight: 850;
+  place-items: center;
+}
+
+:host ::ng-deep .document-list strong,
+:host ::ng-deep .document-list small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .document-list strong {
+  font-size: 0.76rem;
+}
+
+:host ::ng-deep .document-list small,
+:host ::ng-deep .document-list i {
+  color: #748078;
+  font-size: 0.59rem;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .document-list i.failed {
+  color: #ff9b91;
+}
+
+:host ::ng-deep .specification-stage {
+  min-height: 620px;
+  padding: 31px;
+}
+
+:host ::ng-deep .specification-header {
+  align-items: center;
+  padding-bottom: 25px;
+  border-bottom: 1px solid var(--line);
+}
+
+:host ::ng-deep .specification-header h2 {
+  margin-bottom: 6px;
+  font-size: 1.65rem;
+}
+
+:host ::ng-deep .specification-header p,
+:host ::ng-deep .json-editor > p {
+  margin: 0;
+  color: var(--muted);
+}
+
+:host ::ng-deep .action-error {
+  padding: 12px 14px;
+  background: rgba(255, 112, 112, 0.08);
+  border-radius: 10px;
+}
+
+:host ::ng-deep .spec-empty {
+  display: grid;
+  min-height: 460px;
+  color: var(--muted);
+  text-align: center;
+  place-content: center;
+}
+
+:host ::ng-deep .spec-empty h3 {
+  margin: 24px 0 6px;
+  color: var(--ink);
+}
+
+:host ::ng-deep .spec-empty p {
+  max-width: 42ch;
+  margin: 0;
+  line-height: 1.6;
+}
+
+:host ::ng-deep .spec-orbit {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: auto;
+  border: 1px solid rgba(120, 246, 193, 0.22);
+  border-radius: 50%;
+  animation: spec-spin 8s linear infinite;
+}
+
+:host ::ng-deep .spec-orbit i {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--mint);
+  border-radius: 4px;
+  box-shadow: 0 0 18px rgba(120, 246, 193, 0.45);
+}
+
+:host ::ng-deep .spec-orbit i:nth-child(1) {
+  top: -6px;
+  left: 28px;
+}
+:host ::ng-deep .spec-orbit i:nth-child(2) {
+  right: 1px;
+  bottom: 7px;
+}
+:host ::ng-deep .spec-orbit i:nth-child(3) {
+  bottom: 7px;
+  left: 1px;
+}
+
+:host ::ng-deep .spec-summary {
+  display: flex;
+  gap: 8px;
+  padding: 22px 0;
+}
+
+:host ::ng-deep .spec-summary span {
+  padding: 7px 10px;
+  color: #a7b5ad;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.67rem;
+}
+
+:host ::ng-deep .summary-block {
+  padding: 20px;
+  background: rgba(5, 11, 8, 0.45);
+  border-radius: 15px;
+}
+
+:host ::ng-deep .summary-block small,
+:host ::ng-deep .page-plan-grid article > span {
+  color: var(--mint);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .summary-block p {
+  margin: 9px 0 0;
+  line-height: 1.6;
+}
+
+:host ::ng-deep .page-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+:host ::ng-deep .page-plan-grid article {
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+}
+
+:host ::ng-deep .page-plan-grid h3 {
+  margin: 8px 0;
+}
+
+:host ::ng-deep .page-plan-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+:host ::ng-deep .json-editor {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+:host ::ng-deep .json-editor summary {
+  color: var(--mint);
+  font-weight: 760;
+  cursor: pointer;
+}
+
+:host ::ng-deep .json-editor textarea {
+  margin-top: 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+:host ::ng-deep .spec-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+:host ::ng-deep .secondary-button {
+  padding: 0 18px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+:host ::ng-deep .immutability-note {
+  color: #718078;
+  font-size: 0.68rem;
+  text-align: right;
+}
+
+:host ::ng-deep .approved-banner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-top: 24px;
+  padding: 18px;
+  background: rgba(120, 246, 193, 0.08);
+  border: 1px solid rgba(120, 246, 193, 0.18);
+  border-radius: 15px;
+}
+
+:host ::ng-deep .approved-banner > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  color: #06120c;
+  background: var(--mint);
+  border-radius: 50%;
+  place-items: center;
+}
+
+:host ::ng-deep .approved-banner p {
+  margin: 3px 0 0;
+  color: var(--muted);
+}
+
+:host ::ng-deep .generation-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 14px;
+  padding: 20px;
+  background: rgba(152, 133, 255, 0.07);
+  border: 1px solid rgba(152, 133, 255, 0.18);
+  border-radius: 15px;
+}
+
+:host ::ng-deep .generation-action p,
+:host ::ng-deep .generation-status {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+:host ::ng-deep .generation-status {
+  padding: 10px 14px;
+  color: var(--mint);
+}
+
+@keyframes spec-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .site-footer {
   display: flex;
   align-items: center;
@@ -814,6 +1248,24 @@ main.route-entering {
 
   :host ::ng-deep .editor-form {
     padding: 24px;
+  }
+
+  :host ::ng-deep .workspace-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  :host ::ng-deep .workspace-layout {
+    grid-template-columns: 1fr;
+  }
+
+  :host ::ng-deep .specification-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  :host ::ng-deep .page-plan-grid {
+    grid-template-columns: 1fr;
   }
 
   .site-footer {

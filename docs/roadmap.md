@@ -66,7 +66,7 @@ Status: completed.
 
 ## Milestone 4 — Isolated build runner
 
-Status: implementation in review.
+Status: completed.
 
 - Controlled Angular starter template.
 - Disposable builder containers.
@@ -76,6 +76,8 @@ Status: implementation in review.
 - Guaranteed cleanup.
 
 ## Milestone 5 — Requirements and generation
+
+Status: implementation complete; supervisor review pending.
 
 - Written instructions.
 - Document upload.

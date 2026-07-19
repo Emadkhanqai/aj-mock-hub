@@ -28,6 +28,15 @@ export class JobsController {
     return this.jobs.create(projectId, versionId, input);
   }
 
+  @Post('versions/:versionId/generation-jobs')
+  createGeneration(
+    @Param('projectId', new ParseUUIDPipe({ version: '4' })) projectId: string,
+    @Param('versionId', new ParseUUIDPipe({ version: '4' })) versionId: string,
+    @Body() input: CreatePipelineJobDto,
+  ): Promise<CreatePipelineJobResponse> {
+    return this.jobs.createGeneration(projectId, versionId, input);
+  }
+
   @Get('versions/:versionId/jobs')
   list(
     @Param('projectId', new ParseUUIDPipe({ version: '4' })) projectId: string,
