@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ProjectsApiService } from '../core/projects-api.service';
+import { map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-new-project',
@@ -50,6 +51,38 @@ import { ProjectsApiService } from '../core/projects-api.service';
             <small>Name is required and must be 120 characters or fewer.</small>
           }
         </label>
+        <fieldset class="preset-fieldset">
+          <legend>Choose a starting style</legend>
+          <p>You can change colors later in the visual editor.</p>
+          <div class="preset-grid">
+            @for (preset of presets; track preset.value) {
+              <button
+                type="button"
+                [class.selected]="form.controls.preset.value === preset.value"
+                (click)="form.controls.preset.setValue(preset.value)"
+              >
+                <i [style.--preset-color]="preset.color"></i>
+                <strong>{{ preset.label }}</strong>
+                <small>{{ preset.description }}</small>
+              </button>
+            }
+          </div>
+        </fieldset>
+        <label>
+          <span>What should the app do?</span>
+          <textarea
+            formControlName="instructions"
+            maxlength="20000"
+            rows="6"
+            placeholder="Example: Create a customer portal with a dashboard, requests table, status filters and a simple approval flow."
+          ></textarea>
+          @if (
+            form.controls.instructions.touched &&
+            form.controls.instructions.invalid
+          ) {
+            <small>Tell us what you want to build.</small>
+          }
+        </label>
         <label>
           <span
             >Description
@@ -66,7 +99,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
         </label>
         @if (error()) {
           <p class="form-error" role="alert">
-            The project could not be created. Please try again.
+            We could not finish setting up the project. Please try again.
           </p>
         }
         <div class="form-actions">
@@ -76,7 +109,9 @@ import { ProjectsApiService } from '../core/projects-api.service';
             type="submit"
             [disabled]="form.invalid || submitting()"
           >
-            {{ submitting() ? 'Creating workspace…' : 'Create project' }}
+            {{
+              submitting() ? 'Setting up…' : 'Create project and first version'
+            }}
           </button>
         </div>
       </form>
@@ -126,26 +161,76 @@ export class NewProjectComponent {
   private readonly fb = inject(FormBuilder);
   readonly submitting = signal(false);
   readonly error = signal(false);
+  private createdProjectId: string | null = null;
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
     description: ['', Validators.maxLength(2000)],
+    preset: ['AURORA'],
+    instructions: ['', [Validators.required, Validators.maxLength(20000)]],
   });
+  readonly presets = [
+    {
+      value: 'AURORA',
+      label: 'Aurora',
+      description: 'Fresh green, dark and modern',
+      color: '#7cf6c3',
+    },
+    {
+      value: 'MIDNIGHT',
+      label: 'Midnight',
+      description: 'Deep blue for data-heavy apps',
+      color: '#8fa7ff',
+    },
+    {
+      value: 'PAPER',
+      label: 'Paper',
+      description: 'Bright, clean and professional',
+      color: '#e8e4d8',
+    },
+    {
+      value: 'SUNSET',
+      label: 'Sunset',
+      description: 'Warm and bold for campaigns',
+      color: '#ff8c69',
+    },
+  ] as const;
 
   submit() {
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
     this.error.set(false);
+    this.createdProjectId = null;
     const value = this.form.getRawValue();
     this.api
       .createProject({
         name: value.name.trim(),
         description: value.description.trim() || null,
       })
+      .pipe(
+        switchMap((project) => {
+          this.createdProjectId = project.id;
+          return this.api
+            .createVersion(project.id, {
+              label: `${value.preset.toLowerCase()} starter`,
+              instructionsSnapshot: `${value.instructions.trim()}\n\nStarting style: ${value.preset}.`,
+            })
+            .pipe(map((version) => ({ project, version })));
+        }),
+      )
       .subscribe({
-        next: (project) => void this.router.navigate(['/projects', project.id]),
+        next: ({ project, version }) =>
+          void this.router.navigate([
+            '/projects',
+            project.id,
+            'versions',
+            version.id,
+          ]),
         error: () => {
           this.error.set(true);
           this.submitting.set(false);
+          if (this.createdProjectId) {
+            void this.router.navigate(['/projects', this.createdProjectId]);
+          }
         },
       });
   }

@@ -40,4 +40,44 @@ describe('AngularProjectGenerator', () => {
     expect(files[0]?.content).toContain('data-ajmh-id');
     expect(files[0]?.content).toContain('ajmh:element-selected');
   });
+
+  it('renders visual-editor styles, buttons and themes as controlled data', () => {
+    const files = new AngularProjectGenerator().generate({
+      productSummary: 'Synthetic portal',
+      audiences: [],
+      roles: [],
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          route: '/',
+          purpose: 'Show activity.',
+          components: ['Overview', 'Open report'],
+          componentKinds: ['CARD', 'BUTTON'],
+          componentStyles: [
+            { textColor: '#ffffff', backgroundColor: '#112233' },
+            {},
+          ],
+          dataNeeds: [],
+        },
+      ],
+      workflows: [],
+      navigation: {
+        pattern: 'SIDEBAR',
+        items: [{ label: 'Home', route: '/' }],
+      },
+      branding: {
+        tone: 'Warm',
+        primaryColor: '#ff8c69',
+        accessibilityNotes: [],
+      },
+      design: { themePreset: 'SUNSET' },
+      assumptions: [],
+      openQuestions: [],
+    });
+    expect(files[0]?.content).toContain('canvas-action');
+    expect(files[0]?.content).toContain('Open report');
+    expect(files[0]?.content).toContain('#112233');
+    expect(files[0]?.content).toContain('SUNSET');
+  });
 });

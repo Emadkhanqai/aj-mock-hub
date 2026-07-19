@@ -21,6 +21,8 @@ import type {
   ProjectResponse,
   ProjectVersionResponse,
   StaticPreviewResponse,
+  VisualRevisionOperation,
+  VisualThemePreset,
 } from '@aj-mock-hub/contracts';
 import { forkJoin, switchMap, takeWhile, timer } from 'rxjs';
 import { ProjectsApiService } from '../core/projects-api.service';
@@ -50,9 +52,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
         <header class="preview-toolbar">
           <div>
             <small>{{
-              showingDraft()
-                ? 'Validated draft preview'
-                : 'Validated static preview'
+              showingDraft() ? 'Draft preview' : 'Live app preview'
             }}</small>
             <h1>{{ project()!.name }}</h1>
             <p>
@@ -70,14 +70,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   [class.active]="!showingDraft()"
                   (click)="showAccepted()"
                 >
-                  Accepted
+                  Current
                 </button>
                 <button
                   type="button"
                   [class.active]="showingDraft()"
                   (click)="showRevision()"
                 >
-                  Draft
+                  New changes
                 </button>
               </div>
             }
@@ -89,7 +89,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   (click)="viewport.set(option.value)"
                   [attr.aria-label]="option.label + ' preview'"
                 >
-                  <span aria-hidden="true">{{ option.icon }}</span
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    @if (option.value === 'DESKTOP') {
+                      <path d="M3 4h18v12H3zM8 20h8M12 16v4" />
+                    } @else if (option.value === 'TABLET') {
+                      <rect x="5" y="2" width="14" height="20" rx="2" />
+                      <path d="M10 18h4" />
+                    } @else {
+                      <rect x="7" y="2" width="10" height="20" rx="2" />
+                      <path d="M10 18h4" />
+                    }</svg
                   >{{ option.label }}
                 </button>
               }
@@ -99,24 +108,24 @@ import { ProjectsApiService } from '../core/projects-api.service';
 
         <dl class="preview-meta" aria-label="Published preview details">
           <div>
-            <dt>Reviewing</dt>
+            <dt>Showing</dt>
             <dd>
-              {{ showingDraft() ? 'Validated draft' : 'Accepted version' }}
+              {{ showingDraft() ? 'New changes' : 'Current version' }}
             </dd>
           </div>
           <div>
-            <dt>Published</dt>
+            <dt>Created</dt>
             <dd>{{ preview()!.publishedAt | date: 'medium' }}</dd>
           </div>
           <div>
-            <dt>Artifact</dt>
+            <dt>App files</dt>
             <dd>
               {{ preview()!.fileCount }} files ·
               {{ formatBytes(preview()!.totalBytes) }}
             </dd>
           </div>
           <div>
-            <dt>Viewport</dt>
+            <dt>Screen size</dt>
             <dd>{{ viewport().toLowerCase() }}</dd>
           </div>
         </dl>
@@ -125,9 +134,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
           <section class="preview-canvas">
             <div class="browser-chrome">
               <i></i><i></i><i></i>
-              <span
-                >Secure static preview · {{ preview()!.fileCount }} files</span
-              >
+              <span>Safe app preview · {{ preview()!.fileCount }} files</span>
             </div>
             <div class="device-stage" [class.is-loading]="frameLoading()">
               <div class="device-frame" [attr.data-viewport]="viewport()">
@@ -148,55 +155,139 @@ import { ProjectsApiService } from '../core/projects-api.service';
           </section>
 
           <aside class="inspector-panel">
-            <small>Element inspector</small>
+            <small>Edit selected item</small>
             @if (selected()) {
               <div class="selection-card">
-                <span>{{ selected()!.type }}</span>
+                <span>{{
+                  selected()!.type === 'button' ? 'Button' : 'Section'
+                }}</span>
                 <h2>{{ selected()!.label }}</h2>
-                <dl>
-                  <div>
-                    <dt>Element ID</dt>
-                    <dd>{{ selected()!.id }}</dd>
-                  </div>
-                  <div>
-                    <dt>Page</dt>
-                    <dd>{{ selected()!.pageId }}</dd>
-                  </div>
-                  <div>
-                    <dt>Source</dt>
-                    <dd>{{ selected()!.file }}</dd>
-                  </div>
-                </dl>
+                <details class="developer-details">
+                  <summary>Developer details</summary>
+                  <dl>
+                    <div>
+                      <dt>Item ID</dt>
+                      <dd>{{ selected()!.id }}</dd>
+                    </div>
+                    <div>
+                      <dt>Page</dt>
+                      <dd>{{ selected()!.pageId }}</dd>
+                    </div>
+                    <div>
+                      <dt>File</dt>
+                      <dd>{{ selected()!.file }}</dd>
+                    </div>
+                  </dl>
+                </details>
               </div>
               @if (
                 !revision() ||
-                ['FAILED', 'DISCARDED'].includes(revision()!.status)
+                ['FAILED', 'DISCARDED', 'ACCEPTED'].includes(revision()!.status)
               ) {
                 <div class="revision-form">
-                  <label
-                    >Revision instruction<textarea
-                      [formControl]="instruction"
-                      rows="3"
-                    ></textarea>
-                  </label>
-                  <label
-                    >Replacement label<input [formControl]="replacementText"
-                  /></label>
-                  <button
-                    type="button"
-                    [disabled]="
-                      creatingRevision() ||
-                      instruction.invalid ||
-                      replacementText.invalid
-                    "
-                    (click)="createRevision()"
+                  <div
+                    class="editor-tabs"
+                    role="tablist"
+                    aria-label="Editing tools"
                   >
-                    {{
-                      creatingRevision()
-                        ? 'Queueing…'
-                        : 'Create validated draft'
-                    }}
-                  </button>
+                    @for (tab of editorTabs; track tab.value) {
+                      <button
+                        type="button"
+                        role="tab"
+                        [attr.aria-selected]="editorTab() === tab.value"
+                        [class.active]="editorTab() === tab.value"
+                        (click)="editorTab.set(tab.value)"
+                      >
+                        {{ tab.label }}
+                      </button>
+                    }
+                  </div>
+                  @if (editorTab() === 'CONTENT') {
+                    <label>Text<input [formControl]="replacementText" /></label>
+                    <label
+                      >What should change?<textarea
+                        [formControl]="instruction"
+                        rows="3"
+                      ></textarea>
+                    </label>
+                    <button
+                      type="button"
+                      [disabled]="
+                        creatingRevision() ||
+                        instruction.invalid ||
+                        replacementText.invalid
+                      "
+                      (click)="createRevision('RENAME')"
+                    >
+                      {{
+                        creatingRevision() ? 'Starting…' : 'Preview text change'
+                      }}
+                    </button>
+                  } @else if (editorTab() === 'STYLE') {
+                    <div class="color-grid">
+                      <label
+                        >Text color<input
+                          type="color"
+                          [formControl]="textColor"
+                      /></label>
+                      <label
+                        >Background<input
+                          type="color"
+                          [formControl]="backgroundColor"
+                      /></label>
+                    </div>
+                    <button
+                      type="button"
+                      [disabled]="creatingRevision()"
+                      (click)="createRevision('RECOLOR')"
+                    >
+                      Preview colors
+                    </button>
+                    <div class="theme-picker">
+                      <span>Page theme</span>
+                      <div>
+                        @for (preset of themePresets; track preset.value) {
+                          <button
+                            type="button"
+                            class="theme-swatch"
+                            [class.active]="themePreset.value === preset.value"
+                            [style.--swatch]="preset.color"
+                            (click)="themePreset.setValue(preset.value)"
+                          >
+                            <i></i>{{ preset.label }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="secondary-action"
+                      [disabled]="creatingRevision()"
+                      (click)="createRevision('THEME')"
+                    >
+                      Preview page theme
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      [disabled]="creatingRevision()"
+                      (click)="createRevision('CLONE')"
+                    >
+                      Duplicate this item
+                    </button>
+                    <div class="add-button-control">
+                      <label
+                        >New button text<input [formControl]="buttonLabel"
+                      /></label>
+                      <button
+                        type="button"
+                        [disabled]="creatingRevision() || buttonLabel.invalid"
+                        (click)="createRevision('ADD_BUTTON')"
+                      >
+                        Add button to page
+                      </button>
+                    </div>
+                  }
                 </div>
               }
               @if (revision()) {
@@ -204,12 +295,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
                   class="revision-status"
                   [attr.data-status]="revision()!.status"
                 >
-                  <span>{{ revision()!.status }}</span>
+                  <span>{{
+                    revision()!.status === 'READY'
+                      ? 'Preview ready'
+                      : revision()!.status
+                  }}</span>
                   <p>{{ revisionMessage() }}</p>
                 </div>
                 @if (revision()!.status === 'READY') {
                   <label class="accept-label"
-                    >New version label<input [formControl]="versionLabel"
+                    >Name this version<input [formControl]="versionLabel"
                   /></label>
                   <div class="revision-actions">
                     <button
@@ -218,14 +313,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
                       [disabled]="acting()"
                       (click)="discardRevision()"
                     >
-                      Discard
+                      Remove changes
                     </button>
                     <button
                       type="button"
                       [disabled]="acting() || versionLabel.invalid"
                       (click)="acceptRevision()"
                     >
-                      Accept as new version
+                      Keep changes
                     </button>
                   </div>
                 }
@@ -235,16 +330,16 @@ import { ProjectsApiService } from '../core/projects-api.service';
               }
             } @else {
               <div class="inspector-empty">
-                <span>◎</span>
-                <h2>Select an element</h2>
+                <span>↖</span>
+                <h2>Click anything to edit</h2>
                 <p>
-                  Click a component inside the preview to capture its stable
-                  element ID, type, page and source file.
+                  Select a card or button in the app preview. Its editing tools
+                  will appear here.
                 </p>
               </div>
             }
             <footer>
-              <span>SHA-256</span>
+              <span>Preview fingerprint</span>
               <code>{{ preview()!.contentHash.slice(0, 12) }}…</code>
             </footer>
           </aside>
@@ -346,6 +441,15 @@ import { ProjectsApiService } from '../core/projects-api.service';
           background 150ms ease,
           transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
       }
+      .viewport-switcher svg {
+        width: 16px;
+        height: 16px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.7;
+      }
       .viewport-switcher button:active {
         transform: scale(0.97);
       }
@@ -384,6 +488,93 @@ import { ProjectsApiService } from '../core/projects-api.service';
         font-size: 0.7rem;
         font-weight: 680;
         text-transform: capitalize;
+      }
+      .developer-details {
+        margin-top: 14px;
+        color: #84938b;
+        font-size: 0.68rem;
+      }
+      .developer-details summary {
+        cursor: pointer;
+        font-weight: 720;
+      }
+      .editor-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 4px;
+        background: #08100c;
+        border: 1px solid #ffffff12;
+        border-radius: 11px;
+      }
+      .editor-tabs button {
+        padding: 8px 5px;
+        color: #73827a;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        font-size: 0.63rem;
+      }
+      .editor-tabs button.active {
+        color: #07100c;
+        background: #7cf6c3;
+      }
+      .color-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .color-grid input[type='color'] {
+        width: 100%;
+        height: 42px;
+        padding: 4px;
+        cursor: pointer;
+      }
+      .theme-picker {
+        display: grid;
+        gap: 8px;
+      }
+      .theme-picker > span {
+        color: #a8b6af;
+        font-size: 0.68rem;
+        font-weight: 720;
+      }
+      .theme-picker > div {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .revision-form .theme-swatch {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        padding: 8px;
+        color: #93a199;
+        background: #0a120e;
+        border: 1px solid #ffffff14;
+        font-size: 0.62rem;
+      }
+      .theme-swatch i {
+        width: 12px;
+        height: 12px;
+        background: var(--swatch);
+        border-radius: 50%;
+        box-shadow: 0 0 10px color-mix(in srgb, var(--swatch) 50%, transparent);
+      }
+      .revision-form .theme-swatch.active {
+        color: #dff9ec;
+        border-color: var(--swatch);
+      }
+      .revision-form .secondary-action {
+        color: #b7c4bd;
+        background: #111a16;
+        border: 1px solid #ffffff1c;
+      }
+      .add-button-control {
+        display: grid;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid #ffffff12;
       }
       .studio-grid {
         display: grid;
@@ -484,6 +675,15 @@ import { ProjectsApiService } from '../core/projects-api.service';
         border: 0;
         background: #070b0a;
       }
+      .device-frame[data-viewport='DESKTOP'] {
+        width: 720px;
+      }
+      .device-frame[data-viewport='DESKTOP'] iframe {
+        width: 1200px;
+        height: 1067px;
+        transform: scale(0.6);
+        transform-origin: top left;
+      }
       .inspector-panel {
         padding: 24px;
         display: flex;
@@ -565,6 +765,15 @@ import { ProjectsApiService } from '../core/projects-api.service';
       .revision-actions button:disabled {
         opacity: 0.45;
         cursor: not-allowed;
+      }
+      .revision-form .editor-tabs button {
+        padding: 8px 5px;
+        color: #73827a;
+        background: transparent;
+      }
+      .revision-form .editor-tabs button.active {
+        color: #07100c;
+        background: #7cf6c3;
       }
       .revision-status {
         margin-top: 18px;
@@ -733,6 +942,31 @@ export class PreviewStudioComponent implements OnInit {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(120)],
   });
+  readonly textColor = new FormControl('#f4f8f5', { nonNullable: true });
+  readonly backgroundColor = new FormControl('#101915', { nonNullable: true });
+  readonly buttonLabel = new FormControl('Get started', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(120)],
+  });
+  readonly themePreset = new FormControl<VisualThemePreset>('AURORA', {
+    nonNullable: true,
+  });
+  readonly editorTab = signal<'CONTENT' | 'STYLE' | 'ACTIONS'>('CONTENT');
+  readonly editorTabs = [
+    { value: 'CONTENT' as const, label: 'Content' },
+    { value: 'STYLE' as const, label: 'Style' },
+    { value: 'ACTIONS' as const, label: 'Actions' },
+  ];
+  readonly themePresets: ReadonlyArray<{
+    value: VisualThemePreset;
+    label: string;
+    color: string;
+  }> = [
+    { value: 'AURORA', label: 'Aurora', color: '#7cf6c3' },
+    { value: 'MIDNIGHT', label: 'Midnight', color: '#8fa7ff' },
+    { value: 'PAPER', label: 'Paper', color: '#276749' },
+    { value: 'SUNSET', label: 'Sunset', color: '#ff8c69' },
+  ];
   readonly versionLabel = new FormControl('Targeted revision', {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(120)],
@@ -743,11 +977,10 @@ export class PreviewStudioComponent implements OnInit {
   readonly viewports: ReadonlyArray<{
     value: PreviewViewport;
     label: string;
-    icon: string;
   }> = [
-    { value: 'DESKTOP', label: 'Desktop', icon: '▭' },
-    { value: 'TABLET', label: 'Tablet', icon: '▯' },
-    { value: 'MOBILE', label: 'Mobile', icon: '▯' },
+    { value: 'DESKTOP', label: 'Desktop' },
+    { value: 'TABLET', label: 'Tablet' },
+    { value: 'MOBILE', label: 'Mobile' },
   ];
 
   ngOnInit(): void {
@@ -798,7 +1031,7 @@ export class PreviewStudioComponent implements OnInit {
     );
   }
 
-  createRevision(): void {
+  createRevision(operation: VisualRevisionOperation): void {
     const target = this.selected();
     if (
       !target ||
@@ -812,15 +1045,21 @@ export class PreviewStudioComponent implements OnInit {
     this.actionError.set('');
     this.api
       .createRevision(this.projectId, this.versionId, {
-        instruction: this.instruction.value,
+        instruction: this.instructionFor(operation),
         replacementText: this.replacementText.value,
         target,
+        operation,
+        textColor: operation === 'RECOLOR' ? this.textColor.value : null,
+        backgroundColor:
+          operation === 'RECOLOR' ? this.backgroundColor.value : null,
+        buttonLabel: operation === 'ADD_BUTTON' ? this.buttonLabel.value : null,
+        themePreset: operation === 'THEME' ? this.themePreset.value : null,
       })
       .subscribe({
         next: (revision) => {
           this.revision.set(revision);
           this.creatingRevision.set(false);
-          this.versionLabel.setValue(`Revision: ${this.replacementText.value}`);
+          this.versionLabel.setValue(this.versionLabelFor(operation));
           this.pollRevision(revision.id);
         },
         error: () => {
@@ -830,6 +1069,28 @@ export class PreviewStudioComponent implements OnInit {
           );
         },
       });
+  }
+
+  private instructionFor(operation: VisualRevisionOperation): string {
+    const selected = this.selected();
+    const page = selected?.pageId ?? 'page';
+    return {
+      RENAME: this.instruction.value,
+      RECOLOR: `Change the colors of ${selected?.label ?? 'the selected item'} on ${page}.`,
+      CLONE: `Duplicate ${selected?.label ?? 'the selected item'} on ${page}.`,
+      ADD_BUTTON: `Add a “${this.buttonLabel.value}” button to ${page}.`,
+      THEME: `Apply the ${this.themePreset.value.toLowerCase()} theme to ${page}.`,
+    }[operation];
+  }
+
+  private versionLabelFor(operation: VisualRevisionOperation): string {
+    return {
+      RENAME: `Text: ${this.replacementText.value}`,
+      RECOLOR: 'Updated colors',
+      CLONE: `Duplicated ${this.selected()?.label ?? 'item'}`,
+      ADD_BUTTON: `Added ${this.buttonLabel.value} button`,
+      THEME: `${this.themePreset.value.toLowerCase()} theme`,
+    }[operation];
   }
 
   showAccepted(): void {
@@ -892,14 +1153,12 @@ export class PreviewStudioComponent implements OnInit {
     const revision = this.revision();
     if (!revision) return '';
     return {
-      VALIDATING:
-        'Lint, tests and build are running inside the isolated container.',
+      VALIDATING: 'We’re checking your changes and preparing a safe preview.',
       READY:
-        'The draft passed validation. Compare it with the accepted preview.',
-      ACCEPTED: 'This draft is preserved as a new immutable project version.',
-      DISCARDED:
-        'This temporary draft was discarded. The accepted version is unchanged.',
-      FAILED: revision.errorMessage ?? 'The draft did not pass validation.',
+        'Your changes are ready. Check the preview, then keep or remove them.',
+      ACCEPTED: 'Your changes were saved as a new version.',
+      DISCARDED: 'The changes were removed. Your current version is unchanged.',
+      FAILED: revision.errorMessage ?? 'We could not build these changes.',
     }[revision.status];
   }
 

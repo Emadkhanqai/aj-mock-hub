@@ -92,6 +92,21 @@ Developer ZIPs are assembled only from an already validated immutable version wo
 
 Download links are short-lived HMAC-signed AJ Mock Hub API URLs. They do not reveal MinIO keys or credentials, invalid and expired signatures return the same not-found response, and each successful download creates an append-only audit record. Anyone possessing a valid link can download until expiry; authentication and per-user authorization remain deferred. Email sharing uses a provider-neutral SMTP boundary, with Mailpit as the local target and a future approved Azure-compatible provider replacing it without changing export behavior.
 
+## Guided visual revision editor
+
+The preview studio offers a bounded visual editing experience without becoming
+a general-purpose IDE. Users can rename, recolor, or duplicate a selected item,
+add a button, and apply an allowlisted page theme. The browser sends a typed
+operation and validated values; it never edits generated files or iframe DOM
+directly. The worker applies the operation to the framework-independent UI
+specification, regenerates controlled files, and validates the result in the
+existing disposable builder container. A visual draft must pass lint, tests,
+and build before it can be previewed or accepted as a new immutable version.
+
+New-project onboarding offers the same allowlisted theme presets and captures
+the first version instructions immediately. Arbitrary HTML, CSS, JavaScript,
+plugin execution, and direct source editing remain outside the product boundary.
+
 ## Deferred decisions
 
 Later milestones will decide and implement:

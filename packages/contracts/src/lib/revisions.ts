@@ -8,10 +8,24 @@ export type DraftRevisionStatus =
   | 'DISCARDED'
   | 'FAILED';
 
+export type VisualRevisionOperation =
+  | 'RENAME'
+  | 'RECOLOR'
+  | 'CLONE'
+  | 'ADD_BUTTON'
+  | 'THEME';
+
+export type VisualThemePreset = 'AURORA' | 'MIDNIGHT' | 'PAPER' | 'SUNSET';
+
 export interface CreateDraftRevisionRequest {
   instruction: string;
   replacementText: string;
   target: PreviewElementSelection;
+  operation?: VisualRevisionOperation;
+  textColor?: string | null;
+  backgroundColor?: string | null;
+  buttonLabel?: string | null;
+  themePreset?: VisualThemePreset | null;
 }
 
 export interface AcceptDraftRevisionRequest {
@@ -27,6 +41,11 @@ export interface DraftRevisionResponse {
   status: DraftRevisionStatus;
   instruction: string;
   replacementText: string;
+  operation: VisualRevisionOperation;
+  textColor: string | null;
+  backgroundColor: string | null;
+  buttonLabel: string | null;
+  themePreset: VisualThemePreset | null;
   target: PreviewElementSelection;
   previewEntryUrl: string | null;
   errorMessage: string | null;

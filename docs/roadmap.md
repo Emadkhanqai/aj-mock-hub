@@ -98,6 +98,9 @@ Delivered:
 - Desktop, tablet, and mobile preview modes.
 - Stable component selection with element ID, type, page, and source file.
 - Controlled component-label revisions validated in disposable containers.
+- Guided visual revisions for text, element colors, duplication, button creation,
+  and allowlisted page themes. Every change remains a validated draft before it
+  can become a new immutable version.
 - Temporary draft preview, accepted-versus-draft switching, accept, and discard.
 - Version comparison, restore, and duplicate operations that always create new immutable versions.
 

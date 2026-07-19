@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -57,6 +58,7 @@ export class RevisionsService {
       });
     }
     this.assertTarget(base.specification.content as never, input);
+    this.assertOperation(input);
 
     const { revision, job } = await this.prisma.$transaction(
       async (transaction) => {
@@ -82,6 +84,11 @@ export class RevisionsService {
             pipelineJobId: job.id,
             instruction: input.instruction,
             replacementText: input.replacementText,
+            operation: input.operation ?? 'RENAME',
+            textColor: input.textColor,
+            backgroundColor: input.backgroundColor,
+            buttonLabel: input.buttonLabel,
+            themePreset: input.themePreset,
             targetPageId: input.target.pageId,
             targetElementId: input.target.id,
             targetElementType: input.target.type,
@@ -305,6 +312,23 @@ export class RevisionsService {
     }
   }
 
+  private assertOperation(input: CreateDraftRevisionDto): void {
+    const operation = input.operation ?? 'RENAME';
+    const valid =
+      (operation === 'RENAME' && input.replacementText.length > 0) ||
+      (operation === 'RECOLOR' &&
+        Boolean(input.textColor || input.backgroundColor)) ||
+      operation === 'CLONE' ||
+      (operation === 'ADD_BUTTON' && Boolean(input.buttonLabel)) ||
+      (operation === 'THEME' && Boolean(input.themePreset));
+    if (!valid) {
+      throw new BadRequestException({
+        code: 'INVALID_VISUAL_CHANGE',
+        message: 'The selected visual change is incomplete.',
+      });
+    }
+  }
+
   private async assertVersion(
     projectId: string,
     versionId: string,
@@ -337,6 +361,11 @@ export class RevisionsService {
       status: revision.status,
       instruction: revision.instruction,
       replacementText: revision.replacementText,
+      operation: revision.operation as DraftRevisionResponse['operation'],
+      textColor: revision.textColor,
+      backgroundColor: revision.backgroundColor,
+      buttonLabel: revision.buttonLabel,
+      themePreset: revision.themePreset as DraftRevisionResponse['themePreset'],
       target: {
         id: revision.targetElementId,
         type: revision.targetElementType,

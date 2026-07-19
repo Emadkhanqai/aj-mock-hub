@@ -33,6 +33,11 @@ export interface UiSpecificationPage {
   route: string;
   purpose: string;
   components: string[];
+  componentKinds?: Array<'CARD' | 'BUTTON'>;
+  componentStyles?: Array<{
+    textColor?: string | null;
+    backgroundColor?: string | null;
+  }>;
   dataNeeds: string[];
 }
 
@@ -60,6 +65,9 @@ export interface UiSpecificationContent {
     tone: string;
     primaryColor: string | null;
     accessibilityNotes: string[];
+  };
+  design?: {
+    themePreset: 'AURORA' | 'MIDNIGHT' | 'PAPER' | 'SUNSET';
   };
   assumptions: string[];
   openQuestions: string[];

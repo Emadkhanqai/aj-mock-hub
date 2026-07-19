@@ -261,8 +261,10 @@ describe('Pipeline worker integration', () => {
         projectId: project.id,
         baseProjectVersionId: version.id,
         pipelineJobId: revisionJob.id,
-        instruction: 'Rename the first dashboard component.',
-        replacementText: 'Operations overview',
+        instruction: 'Add an Open report button.',
+        replacementText: 'Service overview',
+        operation: 'ADD_BUTTON',
+        buttonLabel: 'Open report',
         targetPageId: 'dashboard',
         targetElementId: 'dashboard:component:0',
         targetElementType: 'component',
@@ -297,7 +299,7 @@ describe('Pipeline worker integration', () => {
     );
     await expect(
       readFile(join(revisionSource, 'src', 'main.ts'), 'utf8'),
-    ).resolves.toContain('Operations overview');
+    ).resolves.toContain('Open report');
   });
 
   async function waitForTerminalState(jobId: string) {

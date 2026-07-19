@@ -24,6 +24,29 @@ export const uiSpecificationSchema = z.strictObject({
         route,
         purpose: nonEmptyText,
         components: z.array(shortText).max(50),
+        componentKinds: z
+          .array(z.enum(['CARD', 'BUTTON']))
+          .max(50)
+          .optional()
+          .default([]),
+        componentStyles: z
+          .array(
+            z.strictObject({
+              textColor: z
+                .string()
+                .regex(/^#[0-9a-fA-F]{6}$/)
+                .nullable()
+                .optional(),
+              backgroundColor: z
+                .string()
+                .regex(/^#[0-9a-fA-F]{6}$/)
+                .nullable()
+                .optional(),
+            }),
+          )
+          .max(50)
+          .optional()
+          .default([]),
         dataNeeds: z.array(shortText).max(50),
       }),
     )
@@ -53,6 +76,12 @@ export const uiSpecificationSchema = z.strictObject({
       .nullable(),
     accessibilityNotes: z.array(nonEmptyText).max(30),
   }),
+  design: z
+    .strictObject({
+      themePreset: z.enum(['AURORA', 'MIDNIGHT', 'PAPER', 'SUNSET']),
+    })
+    .optional()
+    .default({ themePreset: 'AURORA' }),
   assumptions: z.array(nonEmptyText).max(50),
   openQuestions: z.array(nonEmptyText).max(50),
 });
@@ -70,6 +99,7 @@ export const UI_SPECIFICATION_JSON_SCHEMA = {
     'workflows',
     'navigation',
     'branding',
+    'design',
     'assumptions',
     'openQuestions',
   ],
@@ -82,13 +112,38 @@ export const UI_SPECIFICATION_JSON_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'name', 'route', 'purpose', 'components', 'dataNeeds'],
+        required: [
+          'id',
+          'name',
+          'route',
+          'purpose',
+          'components',
+          'componentKinds',
+          'componentStyles',
+          'dataNeeds',
+        ],
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
           route: { type: 'string' },
           purpose: { type: 'string' },
           components: { type: 'array', items: { type: 'string' } },
+          componentKinds: {
+            type: 'array',
+            items: { type: 'string', enum: ['CARD', 'BUTTON'] },
+          },
+          componentStyles: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['textColor', 'backgroundColor'],
+              properties: {
+                textColor: { type: ['string', 'null'] },
+                backgroundColor: { type: ['string', 'null'] },
+              },
+            },
+          },
           dataNeeds: { type: 'array', items: { type: 'string' } },
         },
       },
@@ -133,6 +188,17 @@ export const UI_SPECIFICATION_JSON_SCHEMA = {
         tone: { type: 'string' },
         primaryColor: { type: ['string', 'null'] },
         accessibilityNotes: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    design: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['themePreset'],
+      properties: {
+        themePreset: {
+          type: 'string',
+          enum: ['AURORA', 'MIDNIGHT', 'PAPER', 'SUNSET'],
+        },
       },
     },
     assumptions: { type: 'array', items: { type: 'string' } },

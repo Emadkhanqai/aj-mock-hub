@@ -71,20 +71,32 @@ export function formatPipelineLog(message: string) {
               </div>
               <span>{{ documents().length }}/10</span>
             </div>
-            <p class="panel-copy">TXT, Markdown, PDF or DOCX · maximum 10 MB</p>
-            <label class="upload-control">
-              <input
-                type="file"
-                accept=".txt,.md,.pdf,.docx"
-                [disabled]="
-                  uploading() || specification()?.status === 'APPROVED'
-                "
-                (change)="upload($event)"
-              />
-              <span>{{
-                uploading() ? 'Uploading…' : 'Add requirement file'
-              }}</span>
-            </label>
+            <p class="panel-copy">
+              Add notes, PDFs or Word files · up to 10 MB each
+            </p>
+            @if (specification()?.status === 'APPROVED') {
+              <a
+                class="upload-control is-link"
+                [routerLink]="['/projects', projectId]"
+              >
+                <span>＋ Create a new version to add files</span>
+              </a>
+              <small class="locked-note"
+                >Files are locked after the design plan is approved.</small
+              >
+            } @else {
+              <label class="upload-control">
+                <input
+                  type="file"
+                  accept=".txt,.md,.pdf,.docx"
+                  [disabled]="uploading()"
+                  (change)="upload($event)"
+                />
+                <span>{{
+                  uploading() ? 'Adding file…' : '＋ Add a file'
+                }}</span>
+              </label>
+            }
             @if (documents().length) {
               <ul class="document-list">
                 @for (document of documents(); track document.id) {
@@ -310,9 +322,10 @@ export function formatPipelineLog(message: string) {
                 <section class="export-panel">
                   <div class="export-heading">
                     <div>
-                      <strong>Developer handoff</strong>
+                      <strong>Download source code</strong>
                       <p>
-                        Package clean Angular source or share an expiring link.
+                        Prepare a clean ZIP for your developer, or email a
+                        temporary download link.
                       </p>
                     </div>
                     <button
@@ -321,7 +334,7 @@ export function formatPipelineLog(message: string) {
                       [disabled]="exporting()"
                       (click)="createExport()"
                     >
-                      {{ exporting() ? 'Packaging…' : 'Create clean ZIP' }}
+                      {{ exporting() ? 'Preparing…' : 'Prepare ZIP' }}
                     </button>
                   </div>
                   @if (exports().length) {

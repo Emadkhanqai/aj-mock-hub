@@ -9,6 +9,16 @@
   top: 20px;
   padding: 25px;
 }
+.upload-control.is-link {
+  text-decoration: none;
+}
+.locked-note {
+  display: block;
+  margin-top: 9px;
+  color: #75837b;
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
 .workflow-heading h2 {
   margin: 8px 0 7px;
   font-size: 1.2rem;

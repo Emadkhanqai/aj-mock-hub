@@ -99,9 +99,9 @@ model ProjectVersion {
   documents            RequirementDocument[]
   specification        UiSpecification?
   preview              StaticPreview?
-  baseRevisions         DraftRevision[] @relation("RevisionBaseVersion")
-  acceptedRevision      DraftRevision?  @relation("RevisionAcceptedVersion")
-  exports               DeveloperExport[]
+  baseRevisions        DraftRevision[]          @relation("RevisionBaseVersion")
+  acceptedRevision     DraftRevision?           @relation("RevisionAcceptedVersion")
+  exports              DeveloperExport[]
 
   @@unique([projectId, versionNumber], map: "project_versions_project_id_version_number_key")
   @@map("project_versions")
@@ -127,10 +127,10 @@ model DeveloperExport {
 }
 
 model ExportDownloadAudit {
-  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  exportId   String          @map("export_id") @db.Uuid
-  downloadedAt DateTime      @default(now()) @map("downloaded_at") @db.Timestamptz(3)
-  export     DeveloperExport @relation(fields: [exportId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  exportId     String          @map("export_id") @db.Uuid
+  downloadedAt DateTime        @default(now()) @map("downloaded_at") @db.Timestamptz(3)
+  export       DeveloperExport @relation(fields: [exportId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([exportId, downloadedAt(sort: Desc)], map: "export_download_audits_export_downloaded_at_idx")
   @@map("export_download_audits")
@@ -193,8 +193,8 @@ model PipelineJob {
   project                 Project           @relation(fields: [projectId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   projectVersion          ProjectVersion    @relation(fields: [projectVersionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   logs                    PipelineJobLog[]
-  previews                 StaticPreview[]
-  revision                 DraftRevision?
+  previews                StaticPreview[]
+  revision                DraftRevision?
 
   @@unique([projectVersionId, idempotencyKey], map: "pipeline_jobs_version_idempotency_key")
   @@index([projectId, createdAt(sort: Desc)], map: "pipeline_jobs_project_created_at_idx")
@@ -232,6 +232,11 @@ model DraftRevision {
   status                   DraftRevisionStatus @default(VALIDATING)
   instruction              String              @db.VarChar(2000)
   replacementText          String              @map("replacement_text") @db.VarChar(120)
+  operation                String              @default("RENAME") @db.VarChar(24)
+  textColor                String?             @map("text_color") @db.VarChar(7)
+  backgroundColor          String?             @map("background_color") @db.VarChar(7)
+  buttonLabel              String?             @map("button_label") @db.VarChar(120)
+  themePreset              String?             @map("theme_preset") @db.VarChar(24)
   targetPageId             String              @map("target_page_id") @db.VarChar(120)
   targetElementId          String              @map("target_element_id") @db.VarChar(240)
   targetElementType        String              @map("target_element_type") @db.VarChar(80)

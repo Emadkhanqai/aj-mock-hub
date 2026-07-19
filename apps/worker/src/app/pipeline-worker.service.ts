@@ -284,11 +284,16 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
       targetElementType: string;
       targetFile: string;
       replacementText: string;
+      operation: string;
+      textColor: string | null;
+      backgroundColor: string | null;
+      buttonLabel: string | null;
+      themePreset: string | null;
     },
   ): UiSpecificationContent {
     if (!source) throw new Error('Approved UI specification is required');
     if (
-      revision.targetElementType !== 'component' ||
+      !['component', 'button'].includes(revision.targetElementType) ||
       revision.targetFile !== 'src/main.ts'
     ) {
       throw new Error('Revision target is not supported');
@@ -304,16 +309,81 @@ export class PipelineWorkerService implements OnModuleInit, OnModuleDestroy {
       if (!page.components[componentIndex]) {
         throw new Error('Revision target no longer exists');
       }
+      const components = [...page.components];
+      const componentKinds = Array.from(
+        { length: components.length },
+        (_, index) => page.componentKinds?.[index] ?? 'CARD',
+      );
+      const componentStyles = Array.from(
+        { length: components.length },
+        (_, index) => ({ ...(page.componentStyles?.[index] ?? {}) }),
+      );
+      switch (revision.operation) {
+        case 'RENAME':
+          components[componentIndex] = revision.replacementText;
+          break;
+        case 'RECOLOR':
+          componentStyles[componentIndex] = {
+            textColor: revision.textColor,
+            backgroundColor: revision.backgroundColor,
+          };
+          break;
+        case 'CLONE':
+          if (components.length >= 50) {
+            throw new Error('The page already has the maximum number of items');
+          }
+          components.push(components[componentIndex]);
+          componentKinds.push(componentKinds[componentIndex]);
+          componentStyles.push({ ...componentStyles[componentIndex] });
+          break;
+        case 'ADD_BUTTON':
+          if (!revision.buttonLabel || components.length >= 50) {
+            throw new Error('A button cannot be added to this page');
+          }
+          components.push(revision.buttonLabel);
+          componentKinds.push('BUTTON');
+          componentStyles.push({});
+          break;
+        case 'THEME':
+          break;
+        default:
+          throw new Error('Revision operation is not supported');
+      }
       changed = true;
       return {
         ...page,
-        components: page.components.map((component, index) =>
-          index === componentIndex ? revision.replacementText : component,
-        ),
+        components,
+        componentKinds,
+        componentStyles,
       };
     });
     if (!changed) throw new Error('Revision target page does not exist');
-    return { ...source, pages };
+    const themeColors: Record<string, string> = {
+      AURORA: '#7cf6c3',
+      MIDNIGHT: '#8fa7ff',
+      PAPER: '#276749',
+      SUNSET: '#ff8c69',
+    };
+    const themePreset = revision.themePreset as
+      | 'AURORA'
+      | 'MIDNIGHT'
+      | 'PAPER'
+      | 'SUNSET'
+      | null;
+    return {
+      ...source,
+      pages,
+      ...(revision.operation === 'THEME' && themePreset
+        ? {
+            design: { themePreset },
+            branding: {
+              ...source.branding,
+              primaryColor: themeColors[themePreset],
+              tone: `${themePreset.toLowerCase()} visual theme`,
+            },
+          }
+        : {}),
+    };
   }
 
   private createPreviewStorage(): ObjectStorage {
