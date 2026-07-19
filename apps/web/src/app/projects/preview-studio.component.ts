@@ -8,6 +8,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,7 +27,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
 
 @Component({
   selector: 'app-preview-studio',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink],
   template: `
     <section class="preview-studio">
       <a
@@ -58,34 +59,67 @@ import { ProjectsApiService } from '../core/projects-api.service';
               Version {{ version()!.versionNumber }} · {{ version()!.label }}
             </p>
           </div>
-          <div class="viewport-switcher" aria-label="Preview viewport">
+          <div class="preview-controls">
             @if (revision()?.status === 'READY') {
-              <button
-                type="button"
-                [class.active]="!showingDraft()"
-                (click)="showAccepted()"
+              <div
+                class="viewport-switcher mode-switcher"
+                aria-label="Preview version"
               >
-                Accepted
-              </button>
-              <button
-                type="button"
-                [class.active]="showingDraft()"
-                (click)="showRevision()"
-              >
-                Draft
-              </button>
+                <button
+                  type="button"
+                  [class.active]="!showingDraft()"
+                  (click)="showAccepted()"
+                >
+                  Accepted
+                </button>
+                <button
+                  type="button"
+                  [class.active]="showingDraft()"
+                  (click)="showRevision()"
+                >
+                  Draft
+                </button>
+              </div>
             }
-            @for (option of viewports; track option.value) {
-              <button
-                type="button"
-                [class.active]="viewport() === option.value"
-                (click)="viewport.set(option.value)"
-              >
-                {{ option.label }}
-              </button>
-            }
+            <div class="viewport-switcher" aria-label="Preview viewport">
+              @for (option of viewports; track option.value) {
+                <button
+                  type="button"
+                  [class.active]="viewport() === option.value"
+                  (click)="viewport.set(option.value)"
+                  [attr.aria-label]="option.label + ' preview'"
+                >
+                  <span aria-hidden="true">{{ option.icon }}</span
+                  >{{ option.label }}
+                </button>
+              }
+            </div>
           </div>
         </header>
+
+        <dl class="preview-meta" aria-label="Published preview details">
+          <div>
+            <dt>Reviewing</dt>
+            <dd>
+              {{ showingDraft() ? 'Validated draft' : 'Accepted version' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Published</dt>
+            <dd>{{ preview()!.publishedAt | date: 'medium' }}</dd>
+          </div>
+          <div>
+            <dt>Artifact</dt>
+            <dd>
+              {{ preview()!.fileCount }} files ·
+              {{ formatBytes(preview()!.totalBytes) }}
+            </dd>
+          </div>
+          <div>
+            <dt>Viewport</dt>
+            <dd>{{ viewport().toLowerCase() }}</dd>
+          </div>
+        </dl>
 
         <div class="studio-grid">
           <section class="preview-canvas">
@@ -95,13 +129,19 @@ import { ProjectsApiService } from '../core/projects-api.service';
                 >Secure static preview · {{ preview()!.fileCount }} files</span
               >
             </div>
-            <div class="device-stage">
+            <div class="device-stage" [class.is-loading]="frameLoading()">
               <div class="device-frame" [attr.data-viewport]="viewport()">
+                @if (frameLoading()) {
+                  <div class="frame-loader" role="status">
+                    <i></i><span>Opening secure preview</span>
+                  </div>
+                }
                 <iframe
                   #previewFrame
                   [src]="activePreviewUrl()"
                   sandbox="allow-scripts"
                   title="Generated Angular application preview"
+                  (load)="frameLoading.set(false)"
                 ></iframe>
               </div>
             </div>
@@ -280,7 +320,20 @@ import { ProjectsApiService } from '../core/projects-api.service';
         border-radius: 13px;
         background: #111b17cc;
       }
+      .preview-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .mode-switcher {
+        border-color: #9885ff38;
+      }
       .viewport-switcher button {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
         padding: 9px 13px;
         border: 0;
         border-radius: 9px;
@@ -288,10 +341,49 @@ import { ProjectsApiService } from '../core/projects-api.service';
         background: transparent;
         cursor: pointer;
         font-weight: 750;
+        transition:
+          color 150ms ease,
+          background 150ms ease,
+          transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .viewport-switcher button:active {
+        transform: scale(0.97);
       }
       .viewport-switcher button.active {
         color: #07100c;
         background: #7cf6c3;
+      }
+      .preview-meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 0 0 16px;
+        overflow: hidden;
+        border: 1px solid #ffffff16;
+        border-radius: 14px;
+        background: #0d1512a8;
+      }
+      .preview-meta div {
+        display: grid;
+        gap: 4px;
+        padding: 12px 15px;
+        border-right: 1px solid #ffffff12;
+      }
+      .preview-meta div:last-child {
+        border-right: 0;
+      }
+      .preview-meta dt {
+        color: #65766d;
+        font-size: 0.58rem;
+        font-weight: 760;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .preview-meta dd {
+        margin: 0;
+        color: #b8c5be;
+        font-size: 0.7rem;
+        font-weight: 680;
+        text-transform: capitalize;
       }
       .studio-grid {
         display: grid;
@@ -347,6 +439,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
         );
       }
       .device-frame {
+        position: relative;
         width: 100%;
         height: 640px;
         overflow: hidden;
@@ -355,6 +448,28 @@ import { ProjectsApiService } from '../core/projects-api.service';
         background: #070b0a;
         transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
         box-shadow: 0 18px 55px #0008;
+      }
+      .frame-loader {
+        position: absolute;
+        z-index: 2;
+        display: grid;
+        gap: 12px;
+        color: #7f9087;
+        background: #080e0b;
+        inset: 0;
+        place-content: center;
+        justify-items: center;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .frame-loader i {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #7cf6c32c;
+        border-top-color: #7cf6c3;
+        border-radius: 50%;
+        animation: frame-spin 700ms linear infinite;
       }
       .device-frame[data-viewport='TABLET'] {
         width: 768px;
@@ -523,6 +638,19 @@ import { ProjectsApiService } from '../core/projects-api.service';
           align-items: flex-start;
           flex-direction: column;
         }
+        .preview-controls {
+          width: 100%;
+          justify-content: flex-start;
+        }
+        .preview-meta {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .preview-meta div:nth-child(2) {
+          border-right: 0;
+        }
+        .preview-meta div:nth-child(-n + 2) {
+          border-bottom: 1px solid #ffffff12;
+        }
         .studio-grid {
           grid-template-columns: 1fr;
         }
@@ -541,6 +669,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
           width: 100%;
           overflow: auto;
         }
+        .preview-controls,
+        .viewport-switcher {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .viewport-switcher {
+          flex-direction: row;
+        }
         .viewport-switcher button {
           flex: 1;
         }
@@ -549,6 +685,21 @@ import { ProjectsApiService } from '../core/projects-api.service';
         }
         .device-frame[data-viewport='MOBILE'] {
           width: 100%;
+        }
+      }
+      @keyframes frame-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .frame-loader i {
+          animation-duration: 1.4s;
+        }
+        .viewport-switcher button {
+          transition:
+            color 150ms ease,
+            background 150ms ease;
         }
       }
     `,
@@ -573,6 +724,7 @@ export class PreviewStudioComponent implements OnInit {
   readonly creatingRevision = signal(false);
   readonly acting = signal(false);
   readonly actionError = signal('');
+  readonly frameLoading = signal(true);
   readonly instruction = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(2000)],
@@ -591,10 +743,11 @@ export class PreviewStudioComponent implements OnInit {
   readonly viewports: ReadonlyArray<{
     value: PreviewViewport;
     label: string;
+    icon: string;
   }> = [
-    { value: 'DESKTOP', label: 'Desktop' },
-    { value: 'TABLET', label: 'Tablet' },
-    { value: 'MOBILE', label: 'Mobile' },
+    { value: 'DESKTOP', label: 'Desktop', icon: '▭' },
+    { value: 'TABLET', label: 'Tablet', icon: '▯' },
+    { value: 'MOBILE', label: 'Mobile', icon: '▯' },
   ];
 
   ngOnInit(): void {
@@ -750,6 +903,12 @@ export class PreviewStudioComponent implements OnInit {
     }[revision.status];
   }
 
+  formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
   private loadLatestRevision(): void {
     this.api.listRevisions(this.projectId, this.versionId).subscribe({
       next: ({ items }) => {
@@ -783,6 +942,7 @@ export class PreviewStudioComponent implements OnInit {
       this.actionError.set('The preview URL was rejected.');
       return;
     }
+    this.frameLoading.set(true);
     this.activePreviewUrl.set(
       this.sanitizer.bypassSecurityTrustResourceUrl(path),
     );

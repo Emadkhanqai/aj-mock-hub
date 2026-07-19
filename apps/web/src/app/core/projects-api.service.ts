@@ -23,6 +23,8 @@ import {
   DeveloperExportResponse,
   ShareDeveloperExportResponse,
   HealthResponse,
+  PipelineJobListResponse,
+  PipelineJobResponse,
 } from '@aj-mock-hub/contracts';
 
 @Injectable({ providedIn: 'root' })
@@ -128,6 +130,19 @@ export class ProjectsApiService {
   getPipelineJob(projectId: string, jobId: string) {
     return this.http.get<PipelineJobDetailResponse>(
       `/api/projects/${projectId}/jobs/${jobId}`,
+    );
+  }
+
+  listPipelineJobs(projectId: string, versionId: string) {
+    return this.http.get<PipelineJobListResponse>(
+      `/api/projects/${projectId}/versions/${versionId}/jobs`,
+    );
+  }
+
+  cancelPipelineJob(projectId: string, jobId: string) {
+    return this.http.post<PipelineJobResponse>(
+      `/api/projects/${projectId}/jobs/${jobId}/cancel`,
+      {},
     );
   }
 

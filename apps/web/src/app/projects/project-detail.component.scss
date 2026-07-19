@@ -15,3 +15,102 @@
   background: var(--mint);
   border-radius: 50%;
 }
+
+.comparison-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.comparison-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+}
+.comparison-card header small,
+.comparison-card header strong {
+  display: block;
+}
+.comparison-card header small {
+  color: #718078;
+  font-size: 0.59rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.comparison-card header strong {
+  margin-top: 4px;
+  color: var(--mint);
+  font-size: 1rem;
+}
+.comparison-card header > span {
+  padding: 6px 9px;
+  color: #93a29b;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.64rem;
+}
+.comparison-card header > span.is-changed {
+  color: #ffd76d;
+  border-color: rgba(255, 215, 109, 0.22);
+  background: rgba(255, 215, 109, 0.06);
+}
+.comparison-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.comparison-summary > span {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border-right: 1px solid var(--line);
+}
+.comparison-summary > span:last-child {
+  border-right: 0;
+}
+.comparison-summary small {
+  color: #718078;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.comparison-summary strong {
+  color: #dce8e1;
+  font-size: 1.2rem;
+}
+.comparison-groups {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.comparison-groups section {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 10px;
+}
+.comparison-groups small {
+  color: var(--mint);
+  font-size: 0.59rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.comparison-groups p {
+  margin: 5px 0 0;
+  color: #9aaba2;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .comparison-card header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

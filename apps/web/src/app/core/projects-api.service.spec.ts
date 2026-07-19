@@ -62,4 +62,23 @@ describe('ProjectsApiService', () => {
     });
     request.flush({});
   });
+
+  it('lists and cancels pipeline jobs through the existing job API', () => {
+    service
+      .listPipelineJobs('project-id', 'version-id')
+      .subscribe((response) => expect(response.items).toEqual([]));
+    const list = http.expectOne(
+      '/api/projects/project-id/versions/version-id/jobs',
+    );
+    expect(list.request.method).toBe('GET');
+    list.flush({ items: [] });
+
+    service.cancelPipelineJob('project-id', 'job-id').subscribe();
+    const cancel = http.expectOne(
+      '/api/projects/project-id/jobs/job-id/cancel',
+    );
+    expect(cancel.request.method).toBe('POST');
+    expect(cancel.request.body).toEqual({});
+    cancel.flush({});
+  });
 });

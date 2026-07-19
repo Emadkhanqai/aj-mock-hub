@@ -121,21 +121,61 @@ import { ProjectsApiService } from '../core/projects-api.service';
         }
         @if (comparison()) {
           <div class="comparison-card">
-            <strong
-              >v{{ comparison()!.left.versionNumber }} → v{{
-                comparison()!.right.versionNumber
-              }}</strong
-            >
-            <span>{{
-              comparison()!.instructionsChanged
-                ? 'Instructions changed'
-                : 'Instructions unchanged'
-            }}</span>
-            <p>
-              {{ comparison()!.pages.added.length }} pages added ·
-              {{ comparison()!.pages.removed.length }} removed ·
-              {{ comparison()!.pages.changed.length }} changed
-            </p>
+            <header>
+              <div>
+                <small>Comparing</small
+                ><strong
+                  >v{{ comparison()!.left.versionNumber }} → v{{
+                    comparison()!.right.versionNumber
+                  }}</strong
+                >
+              </div>
+              <span [class.is-changed]="comparison()!.instructionsChanged">{{
+                comparison()!.instructionsChanged
+                  ? 'Instructions changed'
+                  : 'Instructions unchanged'
+              }}</span>
+            </header>
+            <div class="comparison-summary">
+              <span
+                ><small>Added</small
+                ><strong>{{ comparison()!.pages.added.length }}</strong></span
+              >
+              <span
+                ><small>Removed</small
+                ><strong>{{ comparison()!.pages.removed.length }}</strong></span
+              >
+              <span
+                ><small>Changed</small
+                ><strong>{{ comparison()!.pages.changed.length }}</strong></span
+              >
+            </div>
+            @if (
+              comparison()!.pages.added.length ||
+              comparison()!.pages.removed.length ||
+              comparison()!.pages.changed.length
+            ) {
+              <div class="comparison-groups">
+                @if (comparison()!.pages.added.length) {
+                  <section>
+                    <small>Added pages</small>
+                    <p>{{ comparison()!.pages.added.join(' · ') }}</p>
+                  </section>
+                }
+                @if (comparison()!.pages.removed.length) {
+                  <section>
+                    <small>Removed pages</small>
+                    <p>{{ comparison()!.pages.removed.join(' · ') }}</p>
+                  </section>
+                }
+                @if (comparison()!.pages.changed.length) {
+                  <section>
+                    <small>Changed pages</small>
+                    <p>{{ comparison()!.pages.changed.join(' · ') }}</p>
+                  </section>
+                }
+              </div>
+            }
           </div>
         }
         @if (versions().length === 0) {

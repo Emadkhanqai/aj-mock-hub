@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,13 +10,21 @@ import type {
   StaticPreviewResponse,
   UiSpecificationResponse,
   DeveloperExportResponse,
+  PipelineJobDetailResponse,
 } from '@aj-mock-hub/contracts';
 import { catchError, forkJoin, of, switchMap, takeWhile, timer } from 'rxjs';
 import { ProjectsApiService } from '../core/projects-api.service';
 
+export function formatPipelineLog(message: string) {
+  return message
+    .split(String.fromCharCode(27))
+    .join('')
+    .replace(/\[[0-9;]*m/g, '');
+}
+
 @Component({
   selector: 'app-version-workspace',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink],
   styleUrl: './version-workspace.component.scss',
   template: `
     <a class="back-link" [routerLink]="['/projects', projectId]"
@@ -217,27 +226,94 @@ import { ProjectsApiService } from '../core/projects-api.service';
                     isolated builder container.
                   </p>
                 </div>
-                <button
-                  class="button"
-                  type="button"
-                  [disabled]="generating()"
-                  (click)="generate()"
-                >
-                  {{ generating() ? 'Queueing…' : 'Generate Angular app' }}
-                </button>
+                @if (!preview()) {
+                  <button
+                    class="button"
+                    type="button"
+                    [disabled]="generating()"
+                    (click)="generate()"
+                  >
+                    {{ generating() ? 'Queueing…' : 'Generate Angular app' }}
+                  </button>
+                } @else {
+                  <a
+                    class="button"
+                    [routerLink]="[
+                      '/projects',
+                      projectId,
+                      'versions',
+                      versionId,
+                      'preview',
+                    ]"
+                    >Open preview →</a
+                  >
+                }
               </div>
+              @if (generationJob()) {
+                <section class="build-console" aria-live="polite">
+                  <header>
+                    <div>
+                      <span
+                        class="console-status"
+                        [attr.data-status]="generationJob()!.status"
+                      >
+                        <i></i>{{ generationJob()!.status }}
+                      </span>
+                      <h3>Generation activity</h3>
+                    </div>
+                    @if (canCancelGeneration()) {
+                      <button
+                        type="button"
+                        [disabled]="cancelling()"
+                        (click)="cancelGeneration()"
+                      >
+                        {{ cancelling() ? 'Cancelling…' : 'Cancel job' }}
+                      </button>
+                    }
+                  </header>
+                  <div class="console-metrics">
+                    <span
+                      ><small>Attempt</small
+                      ><strong
+                        >{{ generationJob()!.attempts }}/{{
+                          generationJob()!.maxAttempts
+                        }}</strong
+                      ></span
+                    >
+                    <span
+                      ><small>Type</small
+                      ><strong>Angular generation</strong></span
+                    >
+                    <span
+                      ><small>Updated</small
+                      ><strong>{{
+                        generationJob()!.updatedAt | date: 'mediumTime'
+                      }}</strong></span
+                    >
+                  </div>
+                  <ol class="console-logs" aria-label="Generation logs">
+                    @for (log of generationJob()!.logs; track log.id) {
+                      <li [attr.data-level]="log.level">
+                        <time [dateTime]="log.createdAt">{{
+                          log.createdAt | date: 'HH:mm:ss'
+                        }}</time>
+                        <span>{{ log.level }}</span>
+                        <p>{{ formatLog(log.message) }}</p>
+                      </li>
+                    } @empty {
+                      <li class="console-empty">
+                        <p>Waiting for the first worker update…</p>
+                      </li>
+                    }
+                  </ol>
+                  @if (generationJob()!.errorMessage) {
+                    <p class="console-error" role="alert">
+                      {{ generationJob()!.errorMessage }}
+                    </p>
+                  }
+                </section>
+              }
               @if (preview()) {
-                <a
-                  class="button preview-link"
-                  [routerLink]="[
-                    '/projects',
-                    projectId,
-                    'versions',
-                    versionId,
-                    'preview',
-                  ]"
-                  >Open validated preview →</a
-                >
                 <section class="export-panel">
                   <div class="export-heading">
                     <div>
@@ -397,6 +473,9 @@ export class VersionWorkspaceComponent implements OnInit {
   readonly actionError = signal('');
   readonly generating = signal(false);
   readonly generationStatus = signal('');
+  readonly formatLog = formatPipelineLog;
+  readonly generationJob = signal<PipelineJobDetailResponse | null>(null);
+  readonly cancelling = signal(false);
   readonly preview = signal<StaticPreviewResponse | null>(null);
   readonly exports = signal<DeveloperExportResponse[]>([]);
   readonly exporting = signal(false);
@@ -430,6 +509,9 @@ export class VersionWorkspaceComponent implements OnInit {
       exports: this.api
         .listExports(this.projectId, this.versionId)
         .pipe(catchError(() => of({ items: [] }))),
+      jobs: this.api
+        .listPipelineJobs(this.projectId, this.versionId)
+        .pipe(catchError(() => of({ items: [] }))),
     }).subscribe({
       next: ({
         project,
@@ -438,6 +520,7 @@ export class VersionWorkspaceComponent implements OnInit {
         specification,
         preview,
         exports,
+        jobs,
       }) => {
         this.project.set(project);
         this.version.set(version);
@@ -446,6 +529,15 @@ export class VersionWorkspaceComponent implements OnInit {
         this.preview.set(preview);
         this.exports.set(exports.items);
         this.loading.set(false);
+        const generationJob = jobs.items.find(
+          (job) => job.type === 'ANGULAR_GENERATION',
+        );
+        if (generationJob) {
+          this.loadGenerationJob(generationJob.id);
+          if (!this.isTerminalJob(generationJob.status)) {
+            this.pollGeneration(generationJob.id);
+          }
+        }
       },
       error: () => {
         this.loading.set(false);
@@ -567,6 +659,7 @@ export class VersionWorkspaceComponent implements OnInit {
               : 'Angular generation queued for isolated validation.',
           );
           this.generating.set(false);
+          this.loadGenerationJob(job.id);
           if (!['COMPLETED', 'FAILED', 'CANCELLED'].includes(job.status)) {
             this.pollGeneration(job.id);
           } else if (job.status === 'COMPLETED') {
@@ -627,6 +720,28 @@ export class VersionWorkspaceComponent implements OnInit {
     return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
   }
 
+  canCancelGeneration() {
+    const status = this.generationJob()?.status;
+    return !!status && ['QUEUED', 'ACTIVE', 'RETRYING'].includes(status);
+  }
+
+  cancelGeneration() {
+    const job = this.generationJob();
+    if (!job || !this.canCancelGeneration() || this.cancelling()) return;
+    this.cancelling.set(true);
+    this.actionError.set('');
+    this.api.cancelPipelineJob(this.projectId, job.id).subscribe({
+      next: () => {
+        this.cancelling.set(false);
+        this.loadGenerationJob(job.id);
+      },
+      error: () => {
+        this.cancelling.set(false);
+        this.actionError.set('The generation job could not be cancelled.');
+      },
+    });
+  }
+
   private setSpecification(specification: UiSpecificationResponse) {
     this.specification.set(specification);
     this.specificationJson.setValue(
@@ -652,6 +767,7 @@ export class VersionWorkspaceComponent implements OnInit {
       )
       .subscribe({
         next: (job) => {
+          this.generationJob.set(job);
           this.generationStatus.set(`Angular generation: ${job.status}.`);
           if (job.status === 'COMPLETED') this.loadPreview();
           if (job.status === 'FAILED') {
@@ -663,6 +779,18 @@ export class VersionWorkspaceComponent implements OnInit {
         error: () =>
           this.actionError.set('Generation status could not be refreshed.'),
       });
+  }
+
+  private loadGenerationJob(jobId: string) {
+    this.api.getPipelineJob(this.projectId, jobId).subscribe({
+      next: (job) => this.generationJob.set(job),
+      error: () =>
+        this.actionError.set('Generation activity could not be loaded.'),
+    });
+  }
+
+  private isTerminalJob(status: string) {
+    return ['COMPLETED', 'FAILED', 'CANCELLED'].includes(status);
   }
 
   private loadPreview() {
