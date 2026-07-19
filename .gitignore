@@ -7,6 +7,7 @@ out-tsc
 
 # dependencies
 node_modules
+/.pnpm-store
 
 # This repository intentionally tracks first-party workspace packages. These
 # exceptions override any developer-level global ignore rule for Packages/.

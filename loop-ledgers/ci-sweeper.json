@@ -1,0 +1,6 @@
+{
+  "goal": "Reproduce and minimally fix actionable AJ Mock Hub CI failures",
+  "pattern": "ci-sweeper",
+  "level": "L2",
+  "attempts": []
+}

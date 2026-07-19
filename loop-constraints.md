@@ -25,8 +25,9 @@
 - Never disable tests to make CI green
 - Never refactor unrelated code — one fix per run
 - Max 3 fix attempts per item; escalate after
-- Enforce the attempt limit mechanically: log each try to `loop-ledger.json` and run `loop-context --check` before retrying (see the `loop-guard` skill)
-- Remain L1 report-only until loop-ledger, loop-context, and loop-guard are installed and reviewed; do not auto-fix without that approval
+- Enforce the attempt limit mechanically: log each try to `loop-ledgers/<pattern>.json` and run `loop-context --check` before retrying (see the `loop-guard` skill)
+- L2 loops may edit application functionality, dependencies, lockfiles, Prisma schema, additive migrations, tests, API, worker, Angular frontend, and documentation for approved, well-scoped work
+- Destructive migrations, data loss, credentials, paid services, security changes, major dependency upgrades, architecture changes, and merge remain human decisions
 
 ## Communication
 

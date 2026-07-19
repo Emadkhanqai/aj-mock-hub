@@ -1,0 +1,6 @@
+{
+  "goal": "Keep AJ Mock Hub dependencies compatible, aligned, tested, and secure",
+  "pattern": "dependency-sweeper",
+  "level": "L2",
+  "attempts": []
+}

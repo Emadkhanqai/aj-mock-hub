@@ -1,0 +1,6 @@
+{
+  "goal": "Keep watched AJ Mock Hub pull requests reviewed, green, and ready for human merge approval",
+  "pattern": "pr-babysitter",
+  "level": "L2",
+  "attempts": []
+}
