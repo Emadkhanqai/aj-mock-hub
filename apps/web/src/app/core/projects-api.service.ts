@@ -22,11 +22,16 @@ import {
   DeveloperExportListResponse,
   DeveloperExportResponse,
   ShareDeveloperExportResponse,
+  HealthResponse,
 } from '@aj-mock-hub/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectsApiService {
   private readonly http = inject(HttpClient);
+
+  getHealth() {
+    return this.http.get<HealthResponse>('/api/health');
+  }
 
   listProjects() {
     return this.http.get<ProjectListResponse>('/api/projects');

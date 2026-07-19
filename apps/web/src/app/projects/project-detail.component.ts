@@ -13,6 +13,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
 @Component({
   selector: 'app-project-detail',
   imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  styleUrl: './project-detail.component.scss',
   template: `
     <a class="back-link" routerLink="/projects">← Projects</a>
     @if (loading()) {
@@ -25,6 +26,14 @@ import { ProjectsApiService } from '../core/projects-api.service';
     } @else {
       <header class="detail-header">
         <div>
+          <div class="detail-context">
+            <span>Project workspace</span><i></i
+            ><span
+              >{{ versions().length }} version{{
+                versions().length === 1 ? '' : 's'
+              }}</span
+            >
+          </div>
           <h1>{{ project()!.name }}</h1>
           <p class="lede">
             {{ project()!.description || 'No description provided.' }}
@@ -35,7 +44,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
           type="button"
           (click)="showVersionForm.set(!showVersionForm())"
         >
-          {{ showVersionForm() ? 'Close editor' : 'Create version' }}
+          {{ showVersionForm() ? 'Close editor' : '＋ Create version' }}
         </button>
       </header>
 

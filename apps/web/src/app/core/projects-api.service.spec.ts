@@ -33,6 +33,20 @@ describe('ProjectsApiService', () => {
     request.flush({ items: [] });
   });
 
+  it('reads live dependency health from the API', () => {
+    service
+      .getHealth()
+      .subscribe((response) => expect(response.status).toBe('ok'));
+    const request = http.expectOne('/api/health');
+    expect(request.request.method).toBe('GET');
+    request.flush({
+      service: 'api',
+      status: 'ok',
+      dependencies: { postgresql: 'ok', redis: 'ok' },
+      uptimeSeconds: 90,
+    });
+  });
+
   it('sends a version snapshot to the nested project resource', () => {
     service
       .createVersion('project-id', {

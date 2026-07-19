@@ -29,7 +29,7 @@ describe('App', () => {
       Array.from(compiled.querySelectorAll<HTMLAnchorElement>('.nav-link')).map(
         (link) => link.getAttribute('href'),
       ),
-    ).toEqual(['/projects', '/projects/new']);
+    ).toEqual(['/projects', '/projects/new', '/health']);
     expect(compiled.querySelector('.sound-toggle svg')).toBeTruthy();
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });

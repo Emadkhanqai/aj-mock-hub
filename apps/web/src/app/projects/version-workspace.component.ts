@@ -16,6 +16,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
 @Component({
   selector: 'app-version-workspace',
   imports: [ReactiveFormsModule, RouterLink],
+  styleUrl: './version-workspace.component.scss',
   template: `
     <a class="back-link" [routerLink]="['/projects', projectId]"
       >← Project history</a
@@ -299,6 +300,79 @@ import { ProjectsApiService } from '../core/projects-api.service';
             }
           }
         </section>
+
+        <aside class="workflow-rail glass-panel" aria-label="Version workflow">
+          <div class="workflow-heading">
+            <span class="panel-index">Flow</span>
+            <h2>Version readiness</h2>
+            <p>Progress is derived from this immutable version.</p>
+          </div>
+          <ol class="workflow-steps">
+            <li class="is-complete">
+              <span>✓</span>
+              <div>
+                <strong>Brief captured</strong
+                ><small>Immutable instructions</small>
+              </div>
+            </li>
+            <li [class.is-complete]="!!specification()">
+              <span>{{ specification() ? '✓' : '2' }}</span>
+              <div>
+                <strong>Requirements extracted</strong
+                ><small>{{
+                  specification()
+                    ? 'Structured UI plan ready'
+                    : 'Awaiting extraction'
+                }}</small>
+              </div>
+            </li>
+            <li [class.is-complete]="specification()?.status === 'APPROVED'">
+              <span>{{
+                specification()?.status === 'APPROVED' ? '✓' : '3'
+              }}</span>
+              <div>
+                <strong>Plan approved</strong
+                ><small>{{
+                  specification()?.status === 'APPROVED'
+                    ? 'Locked for generation'
+                    : 'Review required'
+                }}</small>
+              </div>
+            </li>
+            <li [class.is-complete]="!!preview()">
+              <span>{{ preview() ? '✓' : '4' }}</span>
+              <div>
+                <strong>Build validated</strong
+                ><small>{{
+                  preview()
+                    ? 'Preview is published'
+                    : 'Isolated validation pending'
+                }}</small>
+              </div>
+            </li>
+          </ol>
+          @if (preview()) {
+            <a
+              class="workflow-preview"
+              [routerLink]="[
+                '/projects',
+                projectId,
+                'versions',
+                versionId,
+                'preview',
+              ]"
+            >
+              <span>Validated preview</span><strong>Open studio ↗</strong>
+            </a>
+          }
+          <div class="integrity-card">
+            <span aria-hidden="true">◇</span>
+            <div>
+              <strong>Immutable by design</strong>
+              <p>Accepted changes always create a new sequential version.</p>
+            </div>
+          </div>
+        </aside>
       </div>
     }
   `,

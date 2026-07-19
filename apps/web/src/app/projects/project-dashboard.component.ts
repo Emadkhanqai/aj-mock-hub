@@ -7,18 +7,31 @@ import { ProjectsApiService } from '../core/projects-api.service';
 @Component({
   selector: 'app-project-dashboard',
   imports: [DatePipe, RouterLink],
+  styleUrl: './project-dashboard.component.scss',
   template: `
     <header class="page-header">
       <div>
         <p class="eyebrow">Project workspace</p>
         <h1>Projects</h1>
-        <p class="lede">Shape an idea, then preserve every revision.</p>
+        <p class="lede">
+          Turn requirements into validated Angular prototypes, with every
+          accepted revision preserved.
+        </p>
       </div>
-      <a class="button" routerLink="/projects/new">New project</a>
+      <a class="button" routerLink="/projects/new"
+        ><span aria-hidden="true">＋</span> New project</a
+      >
     </header>
 
     @if (loading()) {
-      <section class="state" aria-live="polite">Loading projects…</section>
+      <section
+        class="project-skeletons"
+        aria-label="Loading projects"
+        aria-live="polite"
+      >
+        <article><i></i><span></span><span></span></article>
+        <article><i></i><span></span><span></span></article>
+      </section>
     } @else if (error()) {
       <section class="state error" role="alert">
         <h2>Projects could not be loaded</h2>
@@ -39,6 +52,17 @@ import { ProjectsApiService } from '../core/projects-api.service';
         >
       </section>
     } @else {
+      <section class="dashboard-strip" aria-label="Workspace summary">
+        <div>
+          <small>Projects</small
+          ><strong>{{ projects().length.toString().padStart(2, '0') }}</strong>
+        </div>
+        <div><small>Workspace</small><strong>Local</strong></div>
+        <div><small>Version model</small><strong>Immutable</strong></div>
+        <a routerLink="/health"
+          ><i></i><span>System health</span><small>Check status →</small></a
+        >
+      </section>
       <section class="project-grid" aria-label="Projects">
         @for (project of projects(); track project.id; let index = $index) {
           <a class="project-card" [routerLink]="['/projects', project.id]">
@@ -50,7 +74,7 @@ import { ProjectsApiService } from '../core/projects-api.service';
               <p>{{ project.description || 'No description provided.' }}</p>
             </div>
             <footer>
-              <span>{{ project.status }}</span>
+              <span><i></i>{{ project.status }}</span>
               <time [dateTime]="project.updatedAt"
                 >Updated {{ project.updatedAt | date: 'mediumDate' }}</time
               >

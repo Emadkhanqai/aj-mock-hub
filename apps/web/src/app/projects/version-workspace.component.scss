@@ -1,0 +1,165 @@
+:host ::ng-deep .workspace-layout {
+  grid-template-columns: minmax(230px, 0.62fr) minmax(480px, 1.55fr) minmax(
+      230px,
+      0.62fr
+    );
+}
+.workflow-rail {
+  position: sticky;
+  top: 20px;
+  padding: 25px;
+}
+.workflow-heading h2 {
+  margin: 8px 0 7px;
+  font-size: 1.2rem;
+}
+.workflow-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+.workflow-steps {
+  display: grid;
+  gap: 0;
+  margin: 25px 0;
+  padding: 0;
+  list-style: none;
+}
+.workflow-steps li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 11px;
+  min-height: 67px;
+  color: #68766f;
+}
+.workflow-steps li:not(:last-child)::after {
+  position: absolute;
+  top: 29px;
+  bottom: 0;
+  left: 14px;
+  width: 1px;
+  content: '';
+  background: rgba(255, 255, 255, 0.09);
+}
+.workflow-steps li > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 29px;
+  height: 29px;
+  color: #78867f;
+  background: #0b1210;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  font-size: 0.66rem;
+  font-weight: 850;
+  place-items: center;
+}
+.workflow-steps strong,
+.workflow-steps small {
+  display: block;
+}
+.workflow-steps strong {
+  padding-top: 3px;
+  color: #9eaaa4;
+  font-size: 0.77rem;
+}
+.workflow-steps small {
+  margin-top: 4px;
+  font-size: 0.65rem;
+}
+.workflow-steps li.is-complete > span {
+  color: #06110c;
+  background: var(--mint);
+  border-color: var(--mint);
+}
+.workflow-steps li.is-complete strong {
+  color: #dce8e1;
+}
+.workflow-preview {
+  display: grid;
+  gap: 5px;
+  padding: 15px;
+  color: var(--mint);
+  background: rgba(120, 246, 193, 0.08);
+  border: 1px solid rgba(120, 246, 193, 0.2);
+  border-radius: 13px;
+  text-decoration: none;
+  transition:
+    transform 160ms var(--ease-out),
+    background 160ms ease;
+}
+.workflow-preview span {
+  color: #75837b;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+.workflow-preview strong {
+  font-size: 0.78rem;
+}
+.workflow-preview:active {
+  transform: scale(0.97);
+}
+.integrity-card {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(152, 133, 255, 0.055);
+  border: 1px solid rgba(152, 133, 255, 0.14);
+  border-radius: 13px;
+}
+.integrity-card > span {
+  color: #ad9fff;
+  font-size: 1.25rem;
+}
+.integrity-card strong {
+  font-size: 0.72rem;
+}
+.integrity-card p {
+  margin: 5px 0 0;
+  color: #748078;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .workflow-preview:hover {
+    background: rgba(120, 246, 193, 0.12);
+    transform: translateY(-2px);
+  }
+}
+@media (max-width: 1100px) {
+  :host ::ng-deep .workspace-layout {
+    grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.5fr);
+  }
+  .workflow-rail {
+    position: static;
+    grid-column: 1 / -1;
+  }
+  .workflow-steps {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .workflow-steps li {
+    grid-template-columns: 1fr;
+  }
+  .workflow-steps li:not(:last-child)::after {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  :host ::ng-deep .workspace-layout {
+    grid-template-columns: 1fr;
+  }
+  .workflow-steps {
+    grid-template-columns: 1fr;
+  }
+  .workflow-steps li {
+    grid-template-columns: 30px 1fr;
+    min-height: 58px;
+  }
+}

@@ -17,6 +17,13 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'health',
+    loadComponent: () =>
+      import('./system-health.component').then(
+        (module) => module.SystemHealthComponent,
+      ),
+  },
+  {
     path: 'projects/:projectId/versions/:versionId/preview',
     loadComponent: () =>
       import('./projects/preview-studio.component').then(
