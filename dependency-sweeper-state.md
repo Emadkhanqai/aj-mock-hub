@@ -1,6 +1,6 @@
 # Dependency Sweeper State — AJ Mock Hub
 
-Last run: 2026-07-19 (manual supervised L2 audit)
+Last run: 2026-07-19 (manual supervised Codex L2 audit)
 Status: L2 assisted; patch/minor changes require verifier and full gates
 
 ## Watched manifests
@@ -30,4 +30,4 @@ Status: L2 assisted; patch/minor changes require verifier and full gates
 - Development-only classification: 9 (4 direct and 5 transitive).
 - Direct classification overall: 5 (`prisma`, `@nx/angular`, `@nx/web`, `@nx/webpack`, and `webpack-dev-server`).
 - Transitive classification overall: 7.
-- The advertised Prisma resolution is a major-version downgrade from 7.x to 6.x, so it remains human-gated. No `npm audit fix` was run and no dependency was changed in this configuration task.
+- The advertised Prisma resolution is a major-version downgrade from 7.x to 6.x, so it remains human-gated. No `npm audit fix` was run and no dependency was changed during loop configuration.
