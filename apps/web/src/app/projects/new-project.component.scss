@@ -20,13 +20,15 @@
 }
 
 :host ::ng-deep .creation-form {
+  display: grid;
+  gap: 20px;
   max-width: none;
-  padding: 28px;
+  padding: 24px;
 }
 .form-intro {
   display: flex;
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 0;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
 }
@@ -58,7 +60,7 @@
 
 :host ::ng-deep .creation-form label {
   gap: 7px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
   font-size: 0.78rem;
 }
 
@@ -66,6 +68,10 @@
 :host ::ng-deep .creation-form textarea {
   padding: 12px 14px;
   border-radius: 10px;
+}
+
+:host ::ng-deep .creation-form .form-actions {
+  padding-top: 2px;
 }
 
 .creation-guide {
@@ -194,5 +200,10 @@
 @media (max-width: 700px) {
   .project-creation-layout {
     grid-template-columns: 1fr;
+  }
+
+  :host ::ng-deep .creation-form {
+    gap: 18px;
+    padding: 20px;
   }
 }

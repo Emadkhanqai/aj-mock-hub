@@ -68,33 +68,27 @@ import { map, switchMap } from 'rxjs';
           </div>
         </fieldset>
         <label>
-          <span>What should the app do?</span>
+          <span
+            >What should the app do?
+            <em
+              >{{ form.controls.instructions.value.length }} / 10,000</em
+            ></span
+          >
           <textarea
             formControlName="instructions"
-            maxlength="20000"
-            rows="4"
+            maxlength="10000"
+            rows="6"
             placeholder="Example: Create a customer portal with a dashboard, requests table, status filters and a simple approval flow."
           ></textarea>
           @if (
             form.controls.instructions.touched &&
             form.controls.instructions.invalid
           ) {
-            <small>Tell us what you want to build.</small>
+            <small
+              >Tell us what you want to build in 10,000 characters or
+              fewer.</small
+            >
           }
-        </label>
-        <label>
-          <span
-            >Description
-            <em
-              >optional · {{ form.controls.description.value.length }}/2000</em
-            ></span
-          >
-          <textarea
-            formControlName="description"
-            maxlength="2000"
-            rows="3"
-            placeholder="What should this prototype help the team understand or validate?"
-          ></textarea>
         </label>
         @if (error()) {
           <p class="form-error" role="alert">
@@ -161,9 +155,8 @@ export class NewProjectComponent {
   private createdProjectId: string | null = null;
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
-    description: ['', Validators.maxLength(2000)],
     preset: ['AURORA'],
-    instructions: ['', [Validators.required, Validators.maxLength(20000)]],
+    instructions: ['', [Validators.required, Validators.maxLength(10000)]],
   });
   readonly presets = [
     {
@@ -201,7 +194,6 @@ export class NewProjectComponent {
     this.api
       .createProject({
         name: value.name.trim(),
-        description: value.description.trim() || null,
       })
       .pipe(
         switchMap((project) => {
