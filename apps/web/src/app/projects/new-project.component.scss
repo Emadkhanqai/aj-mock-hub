@@ -1,6 +1,5 @@
 .project-creation-layout {
-  max-width: 980px;
-  margin-inline: auto;
+  width: 100%;
 }
 
 :host ::ng-deep .page-header.compact {
@@ -97,11 +96,12 @@
   font-size: 0.8rem;
 }
 .attachment-heading p {
-  max-width: 64ch;
+  max-width: none;
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.5;
+  white-space: nowrap;
 }
 .attachment-heading > span {
   color: #7d8b83;
@@ -328,6 +328,10 @@
   .attachment-picker span {
     grid-row: auto;
     text-align: center;
+  }
+
+  .attachment-heading p {
+    white-space: normal;
   }
 }
 

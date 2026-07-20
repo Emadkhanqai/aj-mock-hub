@@ -1045,50 +1045,6 @@ main.route-entering {
   font-size: 0.67rem;
 }
 
-:host ::ng-deep .summary-block {
-  padding: 20px;
-  background: rgba(5, 11, 8, 0.45);
-  border-radius: 15px;
-}
-
-:host ::ng-deep .summary-block small,
-:host ::ng-deep .page-plan-grid article > span {
-  color: var(--mint);
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-:host ::ng-deep .summary-block p {
-  margin: 9px 0 0;
-  line-height: 1.6;
-}
-
-:host ::ng-deep .page-plan-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
-:host ::ng-deep .page-plan-grid article {
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid var(--line);
-  border-radius: 15px;
-}
-
-:host ::ng-deep .page-plan-grid h3 {
-  margin: 8px 0;
-}
-
-:host ::ng-deep .page-plan-grid p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.55;
-}
-
 :host ::ng-deep .json-editor {
   margin-top: 22px;
   padding-top: 18px;
@@ -1379,10 +1335,6 @@ main.route-entering {
   :host ::ng-deep .specification-header {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  :host ::ng-deep .page-plan-grid {
-    grid-template-columns: 1fr;
   }
 
   .site-footer {

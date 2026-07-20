@@ -36,6 +36,9 @@ describe('NewProjectComponent', () => {
     expect(
       view.querySelector('input[type="file"]')?.getAttribute('multiple'),
     ).not.toBeNull();
+    expect(view.textContent).toContain(
+      'Attach briefs, documents or reference screenshots. These files will be treated as the source of truth.',
+    );
   });
 
   it('accepts up to 10,000 instruction characters and rejects more', () => {

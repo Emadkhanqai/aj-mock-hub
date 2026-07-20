@@ -204,21 +204,95 @@ export function formatPipelineLog(message: string) {
                 questions</span
               >
             </div>
-            <div class="spec-preview">
-              <div class="summary-block">
-                <small>Product summary</small>
+            <section
+              class="build-understanding"
+              aria-labelledby="build-plan-title"
+            >
+              <header>
+                <small>What we’ll build</small>
+                <h3 id="build-plan-title">
+                  {{ specification()!.content.pages.length }}-page Angular
+                  prototype with
+                  {{ specification()!.content.navigation.items.length }}
+                  navigation
+                  {{
+                    specification()!.content.navigation.items.length === 1
+                      ? 'item'
+                      : 'items'
+                  }}.
+                </h3>
                 <p>{{ specification()!.content.productSummary }}</p>
+              </header>
+
+              <div class="understanding-grid">
+                <article>
+                  <span>Pages</span>
+                  <ul>
+                    @for (
+                      page of specification()!.content.pages;
+                      track page.id
+                    ) {
+                      <li>
+                        <strong>{{ page.name }}</strong>
+                        <p>{{ page.purpose }}</p>
+                      </li>
+                    }
+                  </ul>
+                </article>
+
+                <article>
+                  <span>Navigation</span>
+                  <h4>
+                    {{
+                      navigationPatternLabel(
+                        specification()!.content.navigation.pattern
+                      )
+                    }}
+                  </h4>
+                  <ol>
+                    @for (
+                      item of specification()!.content.navigation.items;
+                      track item.route
+                    ) {
+                      <li>
+                        <strong>{{ item.label }}</strong>
+                        <small>{{ item.route }}</small>
+                      </li>
+                    } @empty {
+                      <li><strong>No navigation bar required</strong></li>
+                    }
+                  </ol>
+                </article>
+
+                <article>
+                  <span>Workflows</span>
+                  @if (specification()!.content.workflows.length) {
+                    <ul>
+                      @for (
+                        workflow of specification()!.content.workflows;
+                        track workflow.name
+                      ) {
+                        <li>
+                          <strong>{{ workflow.name }}</strong>
+                          <p>{{ workflow.steps.length }} steps</p>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p>No multi-step workflows were requested.</p>
+                  }
+                </article>
+
+                <article>
+                  <span>Visual direction</span>
+                  <h4>{{ specification()!.content.branding.tone }}</h4>
+                  <p>
+                    The selected starting style and supplied visual references
+                    will guide the interface.
+                  </p>
+                </article>
               </div>
-              <div class="page-plan-grid">
-                @for (page of specification()!.content.pages; track page.id) {
-                  <article>
-                    <span>{{ page.route }}</span>
-                    <h3>{{ page.name }}</h3>
-                    <p>{{ page.purpose }}</p>
-                  </article>
-                }
-              </div>
-            </div>
+            </section>
 
             @if (specification()!.status === 'DRAFT') {
               @if (hasOpenQuestions()) {
@@ -239,29 +313,48 @@ export function formatPipelineLog(message: string) {
                   </ul>
                 </section>
               }
-              <details class="json-editor" [open]="editing()">
-                <summary (click)="editing.set(!editing())">
-                  Edit complete specification
-                </summary>
-                <p>
-                  Advanced structured editor. Invalid fields will be rejected
-                  safely.
-                </p>
-                <textarea
-                  [formControl]="specificationJson"
-                  rows="20"
-                  spellcheck="false"
-                ></textarea>
-              </details>
+              @if (editing()) {
+                <section class="json-editor">
+                  <div class="json-editor-heading">
+                    <div>
+                      <strong>Edit plan details</strong>
+                      <p>
+                        Advanced structured editor. Invalid fields will be
+                        rejected safely.
+                      </p>
+                    </div>
+                    @if (!hasOpenQuestions()) {
+                      <button type="button" (click)="editing.set(false)">
+                        Close
+                      </button>
+                    }
+                  </div>
+                  <textarea
+                    [formControl]="specificationJson"
+                    rows="20"
+                    spellcheck="false"
+                  ></textarea>
+                </section>
+              }
               <div class="spec-actions">
-                <button
-                  class="secondary-button"
-                  type="button"
-                  [disabled]="saving()"
-                  (click)="save()"
-                >
-                  {{ saving() ? 'Saving…' : 'Save corrections' }}
-                </button>
+                @if (editing()) {
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="save()"
+                  >
+                    {{ saving() ? 'Saving…' : 'Save corrections' }}
+                  </button>
+                } @else {
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    (click)="editing.set(true)"
+                  >
+                    Edit plan details
+                  </button>
+                }
                 <button
                   class="button"
                   type="button"
@@ -752,6 +845,15 @@ export class VersionWorkspaceComponent implements OnInit {
 
   hasOpenQuestions() {
     return (this.specification()?.content.openQuestions.length ?? 0) > 0;
+  }
+
+  navigationPatternLabel(pattern: string) {
+    const labels: Record<string, string> = {
+      SIDEBAR: 'Sidebar navigation',
+      TOPBAR: 'Top navigation bar',
+      HYBRID: 'Sidebar and top navigation',
+    };
+    return labels[pattern] ?? 'Custom navigation';
   }
 
   createExport() {

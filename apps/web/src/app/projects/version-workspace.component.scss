@@ -119,6 +119,103 @@
   font-size: 0.76rem;
   line-height: 1.5;
 }
+.build-understanding {
+  overflow: hidden;
+  background: rgba(5, 11, 8, 0.48);
+  border: 1px solid rgba(120, 246, 193, 0.13);
+  border-radius: 16px;
+}
+.build-understanding > header {
+  padding: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.build-understanding > header small,
+.understanding-grid article > span {
+  color: var(--mint);
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.build-understanding > header h3 {
+  margin: 9px 0 7px;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  line-height: 1.25;
+}
+.build-understanding > header p,
+.understanding-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.understanding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.understanding-grid article {
+  min-width: 0;
+  padding: 20px 22px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.understanding-grid article:nth-child(2n) {
+  border-right: 0;
+}
+.understanding-grid article:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+.understanding-grid h4 {
+  margin: 9px 0 0;
+  font-size: 0.94rem;
+}
+.understanding-grid ul,
+.understanding-grid ol {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.understanding-grid li {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.38fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+.understanding-grid li strong {
+  color: #dce8e1;
+  font-size: 0.78rem;
+}
+.understanding-grid li small {
+  overflow: hidden;
+  color: #738078;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.json-editor-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+.json-editor-heading strong {
+  color: var(--mint);
+}
+.json-editor-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.json-editor-heading button {
+  padding: 6px 9px;
+  color: #aab7b0;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
 .workflow-rail {
   position: sticky;
   top: 20px;
@@ -473,6 +570,18 @@
   }
   :host ::ng-deep .workspace-layout {
     grid-template-columns: 1fr;
+  }
+  .understanding-grid {
+    grid-template-columns: 1fr;
+  }
+  .understanding-grid article,
+  .understanding-grid article:nth-child(2n),
+  .understanding-grid article:nth-last-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .understanding-grid article:last-child {
+    border-bottom: 0;
   }
   .workflow-steps {
     grid-template-columns: 1fr;

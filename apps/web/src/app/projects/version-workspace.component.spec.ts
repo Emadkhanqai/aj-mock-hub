@@ -127,5 +127,10 @@ describe('VersionWorkspaceComponent automatic extraction', () => {
     );
     expect(component.hasOpenQuestions()).toBe(true);
     expect(component.editing()).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain(
+      '1-page Angular prototype with 1 navigation item.',
+    );
+    expect(fixture.nativeElement.textContent).toContain('Top navigation bar');
+    expect(fixture.nativeElement.querySelector('.page-plan-grid')).toBeNull();
   });
 });
