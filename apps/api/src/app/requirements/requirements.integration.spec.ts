@@ -180,4 +180,86 @@ describe('Requirements API integration', () => {
         expect(body.error.code).toBe('DOCUMENT_TYPE_UNSUPPORTED'),
       );
   });
+
+  it('accepts image sources and includes them in extraction', async () => {
+    const project = await request(app.getHttpServer())
+      .post('/api/projects')
+      .send({ name: 'Screenshot requirements' })
+      .expect(201);
+    const version = await request(app.getHttpServer())
+      .post(`/api/projects/${project.body.id}/versions`)
+      .send({
+        label: 'v1',
+        instructionsSnapshot: 'Follow the supplied dashboard reference.',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/documents`,
+      )
+      .attach('file', Buffer.from('synthetic-image'), {
+        filename: 'dashboard.png',
+        contentType: 'image/png',
+      })
+      .expect(201);
+
+    const extracted = await request(app.getHttpServer())
+      .post(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/ui-specification/extract`,
+      )
+      .send({})
+      .expect(201);
+    expect(extracted.body.content.assumptions).toContain(
+      'Requirements include the uploaded image dashboard.png.',
+    );
+
+    await request(app.getHttpServer())
+      .get(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/documents`,
+      )
+      .expect(200)
+      .expect(({ body }) => expect(body.items[0].status).toBe('EXTRACTED'));
+  });
+
+  it('blocks approval while extraction has unresolved questions', async () => {
+    const project = await request(app.getHttpServer())
+      .post('/api/projects')
+      .send({ name: 'Conflicting requirements' })
+      .expect(201);
+    const version = await request(app.getHttpServer())
+      .post(`/api/projects/${project.body.id}/versions`)
+      .send({ label: 'v1', instructionsSnapshot: 'Create a dashboard.' })
+      .expect(201);
+    const extracted = await request(app.getHttpServer())
+      .post(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/ui-specification/extract`,
+      )
+      .send({})
+      .expect(201);
+    const withConflict = await request(app.getHttpServer())
+      .put(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/ui-specification`,
+      )
+      .send({
+        expectedUpdatedAt: extracted.body.updatedAt,
+        content: {
+          ...extracted.body.content,
+          openQuestions: [
+            'The instructions and dashboard.png specify different navigation patterns.',
+          ],
+        },
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post(
+        `/api/projects/${project.body.id}/versions/${version.body.id}/ui-specification/approve`,
+      )
+      .send({ expectedUpdatedAt: withConflict.body.updatedAt })
+      .expect(409)
+      .expect(({ body }) =>
+        expect(body.error.code).toBe('REQUIREMENTS_CLARIFICATION_REQUIRED'),
+      );
+  });
 });

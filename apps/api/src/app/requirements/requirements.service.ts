@@ -24,6 +24,7 @@ import {
 import {
   DocumentExtractor,
   uiSpecificationSchema,
+  type RequirementsInput,
   type RequirementsProvider,
 } from '@aj-mock-hub/generation';
 import {
@@ -128,25 +129,36 @@ export class RequirementsService {
       where: { projectId, projectVersionId: versionId },
       orderBy: { createdAt: 'asc' },
     });
-    const extracted: Array<{ name: string; text: string }> = [];
+    const extracted: RequirementsInput['documents'] = [];
     for (const document of documents) {
       try {
         const content = await this.storage.get(document.storageKey);
-        const text = await this.extractor.extract(
-          document.mediaType as RequirementDocumentMediaType,
-          content,
-        );
-        const textKey = `${document.storageKey}.extracted.txt`;
-        await this.storage.put(textKey, Buffer.from(text), 'text/plain');
+        const mediaType = document.mediaType as RequirementDocumentMediaType;
+        let extractedTextKey: string | null = null;
+        if (mediaType.startsWith('image/')) {
+          extracted.push({
+            name: document.originalName,
+            mediaType,
+            base64: content.toString('base64'),
+          });
+        } else {
+          const text = await this.extractor.extract(mediaType, content);
+          extractedTextKey = `${document.storageKey}.extracted.txt`;
+          await this.storage.put(
+            extractedTextKey,
+            Buffer.from(text),
+            'text/plain',
+          );
+          extracted.push({ name: document.originalName, mediaType, text });
+        }
         await this.prisma.requirementDocument.update({
           where: { id: document.id },
           data: {
             status: 'EXTRACTED',
-            extractedTextKey: textKey,
+            extractedTextKey,
             errorMessage: null,
           },
         });
-        extracted.push({ name: document.originalName, text });
       } catch (error: unknown) {
         await this.prisma.requirementDocument.update({
           where: { id: document.id },
@@ -157,7 +169,7 @@ export class RequirementsService {
         });
         throw new BadRequestException({
           code: 'DOCUMENT_EXTRACTION_FAILED',
-          message: `Text could not be extracted from ${document.originalName}.`,
+          message: `Content could not be read from ${document.originalName}.`,
         });
       }
     }
@@ -215,6 +227,17 @@ export class RequirementsService {
     versionId: string,
     input: ApproveUiSpecificationDto,
   ): Promise<UiSpecificationResponse> {
+    const current = await this.prisma.uiSpecification.findFirst({
+      where: { projectId, projectVersionId: versionId },
+    });
+    if (!current) this.specificationNotFound();
+    if (this.parseContent(current.content).openQuestions.length > 0) {
+      throw new ConflictException({
+        code: 'REQUIREMENTS_CLARIFICATION_REQUIRED',
+        message:
+          'Resolve every open question before approving the UI specification.',
+      });
+    }
     const result = await this.prisma.uiSpecification.updateMany({
       where: {
         projectId,
@@ -250,7 +273,8 @@ export class RequirementsService {
     ) {
       throw new BadRequestException({
         code: 'DOCUMENT_TYPE_UNSUPPORTED',
-        message: 'Only TXT, Markdown, PDF, and DOCX documents are supported.',
+        message:
+          'Only TXT, Markdown, PDF, DOCX, PNG, JPG, and WebP files are supported.',
       });
     }
     if (file.size < 1 || file.size > MAX_REQUIREMENT_DOCUMENT_BYTES) {

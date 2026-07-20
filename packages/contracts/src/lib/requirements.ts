@@ -3,6 +3,9 @@ export const REQUIREMENT_DOCUMENT_MEDIA_TYPES = [
   'text/markdown',
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
 ] as const;
 
 export type RequirementDocumentMediaType =

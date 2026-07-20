@@ -27,15 +27,54 @@ export function formatPipelineLog(message: string) {
   imports: [DatePipe, ReactiveFormsModule, RouterLink],
   styleUrl: './version-workspace.component.scss',
   template: `
-    <a class="back-link" [routerLink]="['/projects', projectId]"
-      >← Project history</a
-    >
+    @if (!automaticExtraction || specification()) {
+      <a class="back-link" [routerLink]="['/projects', projectId]"
+        >← Project history</a
+      >
+    }
     @if (loading()) {
       <section class="state">Opening requirements workspace…</section>
     } @else if (error() || !project() || !version()) {
       <section class="state error" role="alert">
         <h1>Version unavailable</h1>
         <p>The immutable project version could not be loaded.</p>
+      </section>
+    } @else if (automaticExtraction && !specification()) {
+      <section class="extraction-progress glass-panel" aria-live="polite">
+        <span class="spec-orbit" aria-hidden="true"><i></i><i></i><i></i></span>
+        <p class="panel-index">Version 1 · Automatic setup</p>
+        <h1>
+          {{
+            extracting()
+              ? 'Understanding your requirements…'
+              : 'Extraction needs attention'
+          }}
+        </h1>
+        <p class="extraction-copy">
+          {{
+            extracting()
+              ? 'We are reading your instructions and source files, checking for conflicts, and preparing a reviewable UI plan.'
+              : actionError()
+          }}
+        </p>
+        <ol class="extraction-steps">
+          <li class="complete">
+            <span>✓</span><strong>Project created</strong>
+          </li>
+          <li class="complete">
+            <span>✓</span><strong>Version 1 and sources secured</strong>
+          </li>
+          <li [class.active]="extracting()">
+            <span>{{ extracting() ? '•••' : '!' }}</span>
+            <strong>Extracting requirements</strong>
+          </li>
+          <li><span>4</span><strong>Ready for your review</strong></li>
+        </ol>
+        @if (!extracting()) {
+          <button class="button" type="button" (click)="extract()">
+            Try extraction again
+          </button>
+        }
       </section>
     } @else {
       <header class="workspace-hero">
@@ -71,7 +110,7 @@ export function formatPipelineLog(message: string) {
               </div>
               <span>{{ documents().length }}/10</span>
             </div>
-            <p class="panel-copy">Notes, PDF or Word · 10 MB max</p>
+            <p class="panel-copy">Documents or images · 10 MB max</p>
             @if (specification()?.status === 'APPROVED') {
               <a
                 class="upload-control is-link"
@@ -86,7 +125,7 @@ export function formatPipelineLog(message: string) {
               <label class="upload-control">
                 <input
                   type="file"
-                  accept=".txt,.md,.pdf,.docx"
+                  accept=".txt,.md,.pdf,.docx,.png,.jpg,.jpeg,.webp"
                   [disabled]="uploading()"
                   (change)="upload($event)"
                 />
@@ -182,6 +221,24 @@ export function formatPipelineLog(message: string) {
             </div>
 
             @if (specification()!.status === 'DRAFT') {
+              @if (hasOpenQuestions()) {
+                <section class="clarification-card" role="alert">
+                  <span>Clarification required</span>
+                  <h3>We found details that need your decision.</h3>
+                  <p>
+                    Review these questions, update the specification, and remove
+                    each resolved question before approval.
+                  </p>
+                  <ul>
+                    @for (
+                      question of specification()!.content.openQuestions;
+                      track question
+                    ) {
+                      <li>{{ question }}</li>
+                    }
+                  </ul>
+                </section>
+              }
               <details class="json-editor" [open]="editing()">
                 <summary (click)="editing.set(!editing())">
                   Edit complete specification
@@ -208,7 +265,7 @@ export function formatPipelineLog(message: string) {
                 <button
                   class="button"
                   type="button"
-                  [disabled]="approving()"
+                  [disabled]="approving() || hasOpenQuestions()"
                   (click)="approve()"
                 >
                   {{ approving() ? 'Approving…' : 'Approve specification' }}
@@ -463,6 +520,10 @@ export class VersionWorkspaceComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   readonly projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
   readonly versionId = this.route.snapshot.paramMap.get('versionId') ?? '';
+  readonly automaticExtraction =
+    this.route.snapshot.queryParamMap.get('autoExtract') === 'true';
+  readonly setupError =
+    this.route.snapshot.queryParamMap.get('setupError') === 'upload';
   readonly project = signal<ProjectResponse | null>(null);
   readonly version = signal<ProjectVersionResponse | null>(null);
   readonly documents = signal<RequirementDocumentResponse[]>([]);
@@ -533,6 +594,12 @@ export class VersionWorkspaceComponent implements OnInit {
         this.preview.set(preview);
         this.exports.set(exports.items);
         this.loading.set(false);
+        if (this.setupError) {
+          this.actionError.set(
+            'Some source files could not be added. Add the missing files below, then extraction can continue.',
+          );
+        }
+        if (this.automaticExtraction && !specification) this.extract();
         const generationJob = jobs.items.find(
           (job) => job.type === 'ANGULAR_GENERATION',
         );
@@ -625,7 +692,7 @@ export class VersionWorkspaceComponent implements OnInit {
 
   approve() {
     const current = this.specification();
-    if (!current || this.approving()) return;
+    if (!current || this.approving() || this.hasOpenQuestions()) return;
     this.approving.set(true);
     this.actionError.set('');
     this.api
@@ -681,6 +748,10 @@ export class VersionWorkspaceComponent implements OnInit {
 
   extension(name: string) {
     return name.split('.').pop()?.slice(0, 4).toUpperCase() || 'FILE';
+  }
+
+  hasOpenQuestions() {
+    return (this.specification()?.content.openQuestions.length ?? 0) > 0;
   }
 
   createExport() {
@@ -748,6 +819,7 @@ export class VersionWorkspaceComponent implements OnInit {
 
   private setSpecification(specification: UiSpecificationResponse) {
     this.specification.set(specification);
+    if (specification.content.openQuestions.length > 0) this.editing.set(true);
     this.specificationJson.setValue(
       JSON.stringify(specification.content, null, 2),
     );

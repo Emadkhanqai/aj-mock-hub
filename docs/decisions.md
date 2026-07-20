@@ -62,7 +62,9 @@ Build output remains ephemeral in Milestone 4. The worker persists bounded exit 
 
 ## Requirements documents and UI specifications
 
-Requirements documents belong to an immutable project version. PostgreSQL stores allowlisted media type, bounded size, lifecycle state, and opaque storage keys; MinIO stores source bytes and bounded extracted text behind the object-storage interface. Uploads allow TXT, Markdown, PDF, and DOCX only, with a 10 MB per-file limit and at most 10 documents per version. Object keys are server-generated and never derived as trusted paths from user filenames.
+Requirements sources belong to an immutable project version. PostgreSQL stores allowlisted media type, bounded size, lifecycle state, and opaque storage keys; MinIO stores source bytes and bounded extracted text behind the object-storage interface. Uploads allow TXT, Markdown, PDF, DOCX, PNG, JPEG, and WebP, with a 10 MB per-file limit and at most 10 sources per version. Images are provided only to the configured multimodal requirements provider and are never executed. Object keys are server-generated and never derived as trusted paths from user filenames.
+
+New-project onboarding creates immutable version 1, uploads its selected sources, and starts requirements extraction automatically. Source files are authoritative and typed instructions supplement them. If sources or instructions conflict, extraction records explicit open questions; approval is blocked until every question is resolved. Angular generation still requires deliberate approval of the resulting framework-independent UI specification.
 
 Each project version has at most one framework-independent UI specification. Drafts use optimistic concurrency through `updatedAt` and remain editable. Approval records an UTC timestamp and is irreversible: both API rules and a PostgreSQL trigger reject updates or deletion after approval. Angular generation requires an approved specification.
 

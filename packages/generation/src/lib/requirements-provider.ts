@@ -1,5 +1,9 @@
 import { AzureOpenAI } from 'openai';
-import type { UiSpecificationContent } from '@aj-mock-hub/contracts';
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
+import type {
+  RequirementDocumentMediaType,
+  UiSpecificationContent,
+} from '@aj-mock-hub/contracts';
 import {
   UI_SPECIFICATION_JSON_SCHEMA,
   uiSpecificationSchema,
@@ -7,7 +11,12 @@ import {
 
 export interface RequirementsInput {
   instructions: string;
-  documents: Array<{ name: string; text: string }>;
+  documents: Array<{
+    name: string;
+    mediaType: RequirementDocumentMediaType;
+    text?: string;
+    base64?: string;
+  }>;
 }
 
 export interface RequirementsProvider {
@@ -25,6 +34,8 @@ export interface AzureRequirementsProviderOptions {
 
 const SYSTEM_PROMPT = `You are a product requirements analyst for Angular UI prototypes.
 Create a framework-independent UI specification from the supplied instructions and documents.
+Treat every supplied document and image as an authoritative source. Typed instructions supplement those sources.
+If any sources or instructions conflict, do not choose a side or guess. Add a precise clarification request to openQuestions for every conflict.
 Do not invent backend behavior. Record uncertainty under assumptions and openQuestions.
 Routes must begin with / and page ids must be lowercase kebab-case.`;
 
@@ -43,16 +54,36 @@ export class AzureOpenAiRequirementsProvider implements RequirementsProvider {
   }
 
   async extract(input: RequirementsInput): Promise<UiSpecificationContent> {
-    const documents = input.documents
-      .map(({ name, text }) => `\n--- Document: ${name} ---\n${text}`)
-      .join('');
+    const userContent: ChatCompletionContentPart[] = [
+      {
+        type: 'text',
+        text: `Instructions:\n${input.instructions}`,
+      },
+    ];
+    for (const document of input.documents) {
+      userContent.push({
+        type: 'text',
+        text: `Source: ${document.name} (${document.mediaType})${
+          document.text ? `\n${document.text}` : ''
+        }`,
+      });
+      if (document.base64) {
+        userContent.push({
+          type: 'image_url',
+          image_url: {
+            url: `data:${document.mediaType};base64,${document.base64}`,
+            detail: 'auto',
+          },
+        });
+      }
+    }
     const completion = await this.client.chat.completions.create({
       model: this.options.deployment,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Instructions:\n${input.instructions}${documents}`,
+          content: userContent,
         },
       ],
       response_format: {
@@ -104,7 +135,10 @@ export class DeterministicRequirementsProvider implements RequirementsProvider {
         ],
       },
       assumptions: input.documents.map(
-        ({ name }) => `Requirements include the uploaded document ${name}.`,
+        ({ name, mediaType }) =>
+          `Requirements include the uploaded ${
+            mediaType.startsWith('image/') ? 'image' : 'document'
+          } ${name}.`,
       ),
       openQuestions: [],
     }) as unknown as UiSpecificationContent;

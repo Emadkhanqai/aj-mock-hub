@@ -2,7 +2,20 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ProjectsApiService } from '../core/projects-api.service';
-import { map, switchMap } from 'rxjs';
+import { forkJoin, map, of, switchMap } from 'rxjs';
+
+const MAX_ATTACHMENTS = 10;
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const ATTACHMENT_MEDIA_TYPES: Record<string, string> = {
+  txt: 'text/plain',
+  md: 'text/markdown',
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+};
 
 @Component({
   selector: 'app-new-project',
@@ -21,128 +34,157 @@ import { map, switchMap } from 'rxjs';
     </header>
 
     <div class="project-creation-layout">
-      <form
-        class="editor-form creation-form"
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-      >
-        <div class="form-intro">
-          <span>01</span>
-          <div>
-            <h2>Start your project</h2>
-            <p>
-              Add the essentials now. You can refine the generated app later.
-            </p>
-          </div>
-        </div>
-        <label>
-          <span
-            >Project name
-            <em>{{ form.controls.name.value.length }}/120</em></span
-          >
-          <input
-            formControlName="name"
-            maxlength="120"
-            autocomplete="off"
-            placeholder="e.g. Customer service portal"
-          />
-          @if (form.controls.name.touched && form.controls.name.invalid) {
-            <small>Name is required and must be 120 characters or fewer.</small>
-          }
-        </label>
-        <fieldset class="preset-fieldset">
-          <legend>Choose a starting style</legend>
-          <p>You can change colors later in the visual editor.</p>
-          <div class="preset-grid">
-            @for (preset of presets; track preset.value) {
-              <button
-                type="button"
-                [class.selected]="form.controls.preset.value === preset.value"
-                (click)="form.controls.preset.setValue(preset.value)"
-              >
-                <i [style.--preset-color]="preset.color"></i>
-                <strong>{{ preset.label }}</strong>
-                <small>{{ preset.description }}</small>
-              </button>
-            }
-          </div>
-        </fieldset>
-        <label>
-          <span
-            >What should the app do?
-            <em
-              >{{ form.controls.instructions.value.length }} / 10,000</em
-            ></span
-          >
-          <textarea
-            formControlName="instructions"
-            maxlength="10000"
-            rows="6"
-            placeholder="Example: Create a customer portal with a dashboard, requests table, status filters and a simple approval flow."
-          ></textarea>
-          @if (
-            form.controls.instructions.touched &&
-            form.controls.instructions.invalid
-          ) {
-            <small
-              >Tell us what you want to build in 10,000 characters or
-              fewer.</small
-            >
-          }
-        </label>
-        @if (error()) {
-          <p class="form-error" role="alert">
-            We could not finish setting up the project. Please try again.
+      @if (submitting()) {
+        <section class="editor-form setup-progress" aria-live="polite">
+          <span class="setup-orbit" aria-hidden="true"
+            ><i></i><i></i><i></i
+          ></span>
+          <p class="eyebrow">Creating version 1</p>
+          <h2>{{ setupStep() }}</h2>
+          <p>
+            Keep this page open. Your sources are being secured before the UI
+            plan is prepared.
           </p>
-        }
-        <div class="form-actions">
-          <a class="button secondary" routerLink="/projects">Cancel</a>
-          <button
-            class="button"
-            type="submit"
-            [disabled]="form.invalid || submitting()"
-          >
-            {{ submitting() ? 'Setting up…' : 'Create project' }}
-          </button>
-        </div>
-      </form>
-      <aside class="creation-guide" aria-label="What happens next">
-        <span class="panel-index">Next</span>
-        <h2>A clean path from brief to build.</h2>
-        <ol>
-          <li>
+        </section>
+      } @else {
+        <form
+          class="editor-form creation-form"
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+        >
+          <div class="form-intro">
             <span>01</span>
             <div>
-              <strong>Capture requirements</strong>
-              <p>Write the brief and attach supporting documents.</p>
+              <h2>Start your project</h2>
+              <p>
+                Add the essentials now. You can refine the generated app later.
+              </p>
             </div>
-          </li>
-          <li>
-            <span>02</span>
-            <div>
-              <strong>Review the UI plan</strong>
-              <p>Correct the extracted pages, workflows and assumptions.</p>
+          </div>
+          <label>
+            <span
+              >Project name
+              <em>{{ form.controls.name.value.length }}/120</em></span
+            >
+            <input
+              formControlName="name"
+              maxlength="120"
+              autocomplete="off"
+              placeholder="e.g. Customer service portal"
+            />
+            @if (form.controls.name.touched && form.controls.name.invalid) {
+              <small
+                >Name is required and must be 120 characters or fewer.</small
+              >
+            }
+          </label>
+          <fieldset class="preset-fieldset">
+            <legend>Choose a starting style</legend>
+            <p>You can change colors later in the visual editor.</p>
+            <div class="preset-grid">
+              @for (preset of presets; track preset.value) {
+                <button
+                  type="button"
+                  [class.selected]="form.controls.preset.value === preset.value"
+                  (click)="form.controls.preset.setValue(preset.value)"
+                >
+                  <i [style.--preset-color]="preset.color"></i>
+                  <strong>{{ preset.label }}</strong>
+                  <small>{{ preset.description }}</small>
+                </button>
+              }
             </div>
-          </li>
-          <li>
-            <span>03</span>
-            <div>
-              <strong>Generate safely</strong>
-              <p>Validate Angular output inside an isolated container.</p>
+          </fieldset>
+          <label>
+            <span
+              >What should the app do?
+              <em
+                >{{ form.controls.instructions.value.length }} / 10,000</em
+              ></span
+            >
+            <textarea
+              formControlName="instructions"
+              maxlength="10000"
+              rows="6"
+              placeholder="Example: Create a customer portal with a dashboard, requests table, status filters and a simple approval flow."
+            ></textarea>
+            @if (
+              form.controls.instructions.touched &&
+              form.controls.instructions.invalid
+            ) {
+              <small
+                >Tell us what you want to build in 10,000 characters or
+                fewer.</small
+              >
+            }
+          </label>
+          <section class="attachment-field" aria-labelledby="attachment-title">
+            <div class="attachment-heading">
+              <div>
+                <strong id="attachment-title">Add source files</strong>
+                <p>
+                  Attach briefs, documents or reference screenshots. These files
+                  will be treated as the source of truth.
+                </p>
+              </div>
+              <span>{{ attachments().length }}/10</span>
             </div>
-          </li>
-          <li>
-            <span>04</span>
-            <div>
-              <strong>Preview and hand off</strong>
-              <p>Revise, preserve and export clean source.</p>
-            </div>
-          </li>
-        </ol>
-        <p class="guide-note">
-          Nothing is generated until you approve the specification.
-        </p>
-      </aside>
+            <label class="attachment-picker">
+              <input
+                type="file"
+                multiple
+                aria-label="Choose source files"
+                accept=".txt,.md,.pdf,.docx,.png,.jpg,.jpeg,.webp"
+                (change)="selectAttachments($event)"
+              />
+              <span>＋ Choose files</span>
+              <small>TXT, MD, PDF, DOCX, PNG, JPG or WebP · 10 MB each</small>
+            </label>
+            @if (attachmentError()) {
+              <p class="attachment-error" role="alert">
+                {{ attachmentError() }}
+              </p>
+            }
+            @if (attachments().length) {
+              <ul class="attachment-list">
+                @for (file of attachments(); track file) {
+                  <li>
+                    <span class="attachment-type">{{
+                      extension(file.name)
+                    }}</span>
+                    <span>
+                      <strong>{{ file.name }}</strong>
+                      <small>{{ formatBytes(file.size) }}</small>
+                    </span>
+                    <button
+                      type="button"
+                      [attr.aria-label]="'Remove ' + file.name"
+                      (click)="removeAttachment(file)"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+          @if (error()) {
+            <p class="form-error" role="alert">
+              We could not finish setting up the project. Please try again.
+            </p>
+          }
+          <div class="form-actions">
+            <a class="button secondary" routerLink="/projects">Cancel</a>
+            <button
+              class="button"
+              type="submit"
+              [disabled]="form.invalid || submitting()"
+            >
+              Create project
+            </button>
+          </div>
+        </form>
+      }
     </div>
   `,
 })
@@ -152,7 +194,11 @@ export class NewProjectComponent {
   private readonly fb = inject(FormBuilder);
   readonly submitting = signal(false);
   readonly error = signal(false);
+  readonly attachmentError = signal('');
+  readonly attachments = signal<File[]>([]);
+  readonly setupStep = signal('Saving your project…');
   private createdProjectId: string | null = null;
+  private createdVersionId: string | null = null;
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
     preset: ['AURORA'],
@@ -185,11 +231,64 @@ export class NewProjectComponent {
     },
   ] as const;
 
+  selectAttachments(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const selected = Array.from(input.files ?? []);
+    input.value = '';
+    if (!selected.length) return;
+    const combined = [...this.attachments(), ...selected];
+    if (combined.length > MAX_ATTACHMENTS) {
+      this.attachmentError.set('You can attach up to 10 files.');
+      return;
+    }
+    const normalized: File[] = [];
+    for (const file of combined) {
+      const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+      const mediaType = ATTACHMENT_MEDIA_TYPES[extension];
+      if (!mediaType) {
+        this.attachmentError.set(
+          `${file.name} is not supported. Choose TXT, MD, PDF, DOCX, PNG, JPG or WebP.`,
+        );
+        return;
+      }
+      if (file.size < 1 || file.size > MAX_ATTACHMENT_BYTES) {
+        this.attachmentError.set(
+          `${file.name} must be between 1 byte and 10 MB.`,
+        );
+        return;
+      }
+      normalized.push(
+        file.type === mediaType
+          ? file
+          : new File([file], file.name, { type: mediaType }),
+      );
+    }
+    this.attachments.set(normalized);
+    this.attachmentError.set('');
+  }
+
+  removeAttachment(file: File) {
+    this.attachments.update((items) => items.filter((item) => item !== file));
+    this.attachmentError.set('');
+  }
+
+  extension(name: string) {
+    return name.split('.').pop()?.slice(0, 4).toUpperCase() || 'FILE';
+  }
+
+  formatBytes(bytes: number) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
   submit() {
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
     this.error.set(false);
+    this.setupStep.set('Saving your project…');
     this.createdProjectId = null;
+    this.createdVersionId = null;
     const value = this.form.getRawValue();
     this.api
       .createProject({
@@ -198,26 +297,58 @@ export class NewProjectComponent {
       .pipe(
         switchMap((project) => {
           this.createdProjectId = project.id;
+          this.setupStep.set('Creating immutable version 1…');
           return this.api
             .createVersion(project.id, {
               label: `${value.preset.toLowerCase()} starter`,
               instructionsSnapshot: `${value.instructions.trim()}\n\nStarting style: ${value.preset}.`,
             })
-            .pipe(map((version) => ({ project, version })));
+            .pipe(
+              map((version) => {
+                this.createdVersionId = version.id;
+                return { project, version };
+              }),
+            );
+        }),
+        switchMap(({ project, version }) => {
+          const files = this.attachments();
+          this.setupStep.set(
+            files.length
+              ? `Securing ${files.length} source ${files.length === 1 ? 'file' : 'files'}…`
+              : 'Preparing automatic requirements extraction…',
+          );
+          const uploads = files.length
+            ? forkJoin(
+                files.map((file) =>
+                  this.api.uploadDocument(project.id, version.id, file),
+                ),
+              )
+            : of([]);
+          return uploads.pipe(map(() => ({ project, version })));
         }),
       )
       .subscribe({
-        next: ({ project, version }) =>
-          void this.router.navigate([
-            '/projects',
-            project.id,
-            'versions',
-            version.id,
-          ]),
+        next: ({ project, version }) => {
+          this.setupStep.set('Opening automatic extraction…');
+          void this.router.navigate(
+            ['/projects', project.id, 'versions', version.id],
+            { queryParams: { autoExtract: 'true' } },
+          );
+        },
         error: () => {
           this.error.set(true);
           this.submitting.set(false);
-          if (this.createdProjectId) {
+          if (this.createdProjectId && this.createdVersionId) {
+            void this.router.navigate(
+              [
+                '/projects',
+                this.createdProjectId,
+                'versions',
+                this.createdVersionId,
+              ],
+              { queryParams: { setupError: 'upload' } },
+            );
+          } else if (this.createdProjectId) {
             void this.router.navigate(['/projects', this.createdProjectId]);
           }
         },

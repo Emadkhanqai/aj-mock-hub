@@ -5,6 +5,120 @@
     );
   gap: 16px;
 }
+.extraction-progress {
+  display: grid;
+  min-height: min(680px, calc(100vh - 170px));
+  max-width: 920px;
+  margin: 20px auto 0;
+  padding: clamp(34px, 7vw, 72px);
+  text-align: center;
+  place-content: center;
+  justify-items: center;
+}
+.extraction-progress .spec-orbit {
+  margin-bottom: 26px;
+}
+.extraction-progress h1 {
+  max-width: 18ch;
+  margin: 12px 0 14px;
+  font-size: clamp(2rem, 5vw, 4rem);
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+}
+.extraction-copy {
+  max-width: 58ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.extraction-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: min(100%, 720px);
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.extraction-steps li {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  justify-items: center;
+  color: #647169;
+  font-size: 0.7rem;
+}
+.extraction-steps li:not(:last-child)::after {
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 1px;
+  content: '';
+  background: rgba(255, 255, 255, 0.1);
+}
+.extraction-steps span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  background: #0b1210;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  font-size: 0.62rem;
+  place-items: center;
+}
+.extraction-steps li.complete,
+.extraction-steps li.active {
+  color: #cbd8d1;
+}
+.extraction-steps li.complete span {
+  color: #07110d;
+  background: var(--mint);
+  border-color: var(--mint);
+}
+.extraction-steps li.active span {
+  color: var(--mint);
+  border-color: rgba(120, 246, 193, 0.45);
+  box-shadow: 0 0 22px rgba(120, 246, 193, 0.12);
+}
+.extraction-progress > .button {
+  margin-top: 28px;
+}
+.clarification-card {
+  margin-top: 18px;
+  padding: 18px;
+  color: #e5d9b5;
+  background: rgba(255, 199, 92, 0.065);
+  border: 1px solid rgba(255, 199, 92, 0.24);
+  border-radius: 14px;
+}
+.clarification-card > span {
+  color: #ffd36e;
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.clarification-card h3 {
+  margin: 8px 0 6px;
+  font-size: 1rem;
+}
+.clarification-card p {
+  margin: 0;
+  color: #a89f87;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.clarification-card ul {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding-left: 18px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
 .workflow-rail {
   position: sticky;
   top: 20px;
@@ -335,6 +449,28 @@
   }
 }
 @media (max-width: 700px) {
+  .extraction-progress {
+    min-height: calc(100vh - 120px);
+    padding: 26px 20px;
+  }
+  .extraction-steps {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: auto;
+    text-align: left;
+  }
+  .extraction-steps li {
+    grid-template-columns: 30px 1fr;
+    justify-items: start;
+    align-items: center;
+  }
+  .extraction-steps li:not(:last-child)::after {
+    top: 30px;
+    bottom: -16px;
+    left: 14px;
+    width: 1px;
+    height: auto;
+  }
   :host ::ng-deep .workspace-layout {
     grid-template-columns: 1fr;
   }
