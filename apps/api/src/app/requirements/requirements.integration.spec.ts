@@ -90,6 +90,7 @@ describe('Requirements API integration', () => {
     const correctedContent = {
       ...extracted.body.content,
       productSummary: 'A corrected service request dashboard.',
+      openQuestions: [],
     };
     const corrected = await request(app.getHttpServer())
       .put(

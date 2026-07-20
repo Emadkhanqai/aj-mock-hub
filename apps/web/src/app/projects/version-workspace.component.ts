@@ -173,6 +173,15 @@ export function formatPipelineLog(message: string) {
               >
                 {{ extracting() ? 'Extracting…' : 'Extract requirements' }}
               </button>
+            } @else if (specification()!.status === 'DRAFT') {
+              <button
+                class="secondary-button"
+                type="button"
+                [disabled]="extracting()"
+                (click)="extract()"
+              >
+                {{ extracting() ? 'Reading sources…' : 'Re-read source files' }}
+              </button>
             }
           </div>
 

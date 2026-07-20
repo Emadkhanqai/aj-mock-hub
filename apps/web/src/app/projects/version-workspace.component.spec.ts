@@ -131,6 +131,7 @@ describe('VersionWorkspaceComponent automatic extraction', () => {
       '1-page Angular prototype with 1 navigation item.',
     );
     expect(fixture.nativeElement.textContent).toContain('Top navigation bar');
+    expect(fixture.nativeElement.textContent).toContain('Re-read source files');
     expect(fixture.nativeElement.querySelector('.page-plan-grid')).toBeNull();
   });
 });
